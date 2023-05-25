@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "outDir": "build",
+    "esModuleInterop": true,
+    "removeComments": true,
+    "forceConsistentCasingInFileNames": false,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "strict": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noImplicitAny": false,
+    "resolveJsonModule": true,
+    "moduleResolution": "Node",
+    "declaration": false,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "strictNullChecks": true,
+    "alwaysStrict": true,
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": ["./node_modules/@types", "./types"]
+  },
+  "exclude": ["node_modules", "build"]
+}

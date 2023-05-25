@@ -1,0 +1,16 @@
+service: mdesign-backend
+
+runtime: nodejs18
+
+instance_class: B2
+
+entrypoint: node ./node_modules/.bin/cross-env NODE_ENV=production node ./build/bin/www
+
+manual_scaling:
+  instances: 1
+
+handlers:
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto
