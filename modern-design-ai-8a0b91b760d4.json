@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "modern-design-ai",
+  "private_key_id": "8a0b91b760d4c1a583d3277be3c25a0731506eec",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDHRhnUUuXYcjqM\n+2Y2W8irMCDss+13H12kVtkDQPd3Z7dqQrQl9hqAcQN2Nxn+gqTT6NmocNGv0bAy\nDrhtVk34Ho9AY1GIzCZ7du8XnNrFqrzfee7fD03TOJeTyGIBqJf8VgIs8qPREe/p\ntDyXosDBavtbKyOR355GJ8XFOerHMEwEB7VVN/L3N5ATfUgtqS78kZAp0Ho0e60h\nJFTf+lbV4hcThLzNQel7WxIk1ZFlXCcRleefrL1PN+N+XuNrpeUECMK+BUsF5BtG\nwPR9RLI9/uUIO+fo/hUkbUWg1ToO+NV6uc64jdU6PtzRjrTJ5eFjhsqpffUjYiBv\nDtF9ezCFAgMBAAECggEATG0fVOZiTqwoto9ouSpkgPtZdU7goVI/SNsiKfRNtNbr\nam6gxvpnWaF+cWVaq9kRPFDOwaJbWXIzgE9S/mQeTS3zRP+ScsPRcoK/2i+HXE5K\nV+9c5OHquDq5L62noPk3KUkXVoPMvk+B0wEUSBfck5HjSyj1YGoCOufgGu9GkxPO\nHBPBSgwB+FkJJYg0VlY5zqJjzbmQ14zxUVogJCeZmVzVhORR1uYGCy7lknoYob16\nMF7iEciwN6UDKJvmB9fDVjMlszYTjGMedhwV6Q2cKVGSDvGRGfhXcuOgE2pNO4zM\nvULQywsxDAGn598W7sMYUj4pLsjhKRuufsMQ7FJGlQKBgQD0OVXu5S7JkfMJ6o3O\nPNu70sy3umXXwB8NjJ4P3UgcmN3Qo+QaJwVWK+IAXvu88K1gykN7RWVICh6u1L2g\n22tRmzB6mSwZDXboSk6meJ5Av0Rsb+Oc7H+fSnKCTNGNPjUjj/SvvedgV39FTv1L\nvVdjmKYTpi/ygrJ/FFRJgWUh1wKBgQDQ4ehNSgCBGFHm8TMV8FQLDbJyZpUXD7nb\nswDxYO4zBH7nXKJUK/T3HHT1CYNjgXvxIOIOzosbWnQ9wv1wHQSnk4Pb/vZl5iXa\n0ooy1T5ukpohPkhiLA2tdZCa50u6Mzj2Twkiyit2KsJnXs77DXPd73pPgNgrnLxi\nzcXPJ08tAwKBgQDQGHKyZjHhqyytjGBcFNseRVYOTxMsLRXIk8KyvdgOFesbNirM\nZedUL3wY2NYjfegdivrI9K6CHa1bRwZ1I8Fj/ZnnPNCoYCKrd3Vgv3IItXD1/Liz\nI4jzD5pWkGIVuaXJsYXKoUOfga5+PfnyKVlnEdCg+X/tYZP6WDYhk9G6bQKBgQDP\nmRX1aqzhoLgVnHa3QSll6vEFPerDBsAjF97CByH11mwBqVEz8pP93Gxo9FF+3bu+\nxH2nVaNvRhDtKRQVDuIHYlbUmKtuTrQkrMbpCoKIBm/kxi/OUhYt5QAY0/OxVSMx\nuQ9NYjybrpeTgOiZHp+fXVjkFxvBDH82e2gzH9BS3QKBgQCzI+WBpkhG1y81N3mF\nL0d0ukh0mkbr8fZwrEXf+gXgF5DJ5ffOgxC4aeKrHQQSohzg34Qs+HpgpPJsWie2\npxdcm3aVrlJ1f8tgx+tZ/NopwMMUfL/zmBIAUWXp6MI+fz2hsG7abbmN8xLqjvrk\nrH67IMewKtf9ETrDF61YAV7t0A==\n-----END PRIVATE KEY-----\n",
+  "client_email": "storage-service-account@modern-design-ai.iam.gserviceaccount.com",
+  "client_id": "116884736485342770185",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/storage-service-account%40modern-design-ai.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

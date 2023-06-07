@@ -1,0 +1,43 @@
+import { model, Schema } from 'mongoose'
+
+const ObjectSchema = new Schema({
+  type: [],
+})
+
+const RenderSchema = new Schema({
+  image: { type: String },
+  objects: {
+    type: [ObjectSchema],
+  },
+})
+
+const InteriorSchema = new Schema(
+  {
+    room: { type: String, required: true },
+    style: { type: String, required: true },
+    image: { type: String, required: true },
+    render1: RenderSchema,
+    render2: RenderSchema,
+    render3: RenderSchema,
+  },
+  {
+    collection: 'interiors',
+    timestamps: true,
+    toObject: { virtuals: true },
+    toJSON: { virtuals: true },
+  }
+)
+
+// InteriorSchema.index({ userId: 1 })
+
+InteriorSchema.methods.toJSON = function toJSON() {
+  const obj = this.toObject()
+  delete obj.__v
+  delete obj._id
+
+  return obj
+}
+
+const InteriorModel = model('interior', InteriorSchema)
+
+export default InteriorModel

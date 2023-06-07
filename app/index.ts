@@ -1,24 +1,26 @@
 import bodyParser from 'body-parser'
-import Express from 'express'
+import express from 'express'
 import multer from 'multer'
-import App from './app/modules'
-import config from './config'
+import Util from 'node:util'
+import config from '../config'
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
-const app = Express()
+const app = express()
 
-const multerMid = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    // no larger than 30mb.
-    fileSize: 30 * 1024 * 1024,
-  },
-})
+const multerMid = Util.promisify(
+  multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      // no larger than 30mb.
+      fileSize: 30 * 1024 * 1024,
+    },
+  }).single('file')
+)
 
 // if (process.env.NODE_ENV !== 'production') {
-app.use((req: any, res: any, next: any) => {
-  res.header('Access-Control-Allow-Credentials', true)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true')
   res.header('Access-Control-Allow-Origin', req.headers.origin)
   res.header('Access-Control-Allow-Methods', 'OPTIONS,GET,PUT,POST,DELETE')
   res.header(
@@ -91,13 +93,13 @@ app.use(bodyParser.urlencoded({ extended: false }))
 //     }
 //   )
 // )
-app.use(multerMid.single('image[value]'))
-app.use(
-  multerMid.fields([
-    { name: 'image[value]', maxCount: 1 },
-    { name: 'image[thumbnail]', maxCount: 1 },
-  ])
-)
+app.use(multerMid)
+// app.use(
+//   multerMid.fields([
+//     { name: 'image[value]', maxCount: 1 },
+//     { name: 'image[thumbnail]', maxCount: 1 },
+//   ])
+// )
 
 // load config
 app.set('configuration', config)
@@ -120,8 +122,10 @@ app.map = (a: any, route: string) => {
   }
 }
 
-const debug = require('debug')('mdesign')
+const debug = (await import('debug')).default('mdesign:server')
 
 debug('Server run')
 
-export default App(app)
+await (await import('./modules')).default(app)
+
+export default app

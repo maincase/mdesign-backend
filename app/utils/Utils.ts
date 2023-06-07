@@ -1,3 +1,5 @@
+import bcrypt from 'bcrypt-nodejs'
+
 const AUTH_HEADER = 'authorization'
 const DEFAULT_TOKEN_BODY_FIELD = 'access_token'
 const DEFAULT_TOKEN_QUERY_PARAM_NAME = 'access_token'
@@ -30,7 +32,6 @@ export default class Utils {
   }
 
   static generateHash(password: string): string {
-    const bcrypt = require('bcrypt-nodejs')
     return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null)
   }
 

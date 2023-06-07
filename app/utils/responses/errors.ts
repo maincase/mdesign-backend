@@ -1,6 +1,6 @@
-const debug = require('debug')('mdesign')
+const debug = (await import('debug')).default('mdesign:api')
 
-class MyError {
+export default class MyError {
   static notFound(err) {
     let error
     if (typeof err === 'string') {
@@ -83,5 +83,3 @@ class MyError {
     return Promise.reject(MyError.planAccess(err))
   }
 }
-
-export default MyError

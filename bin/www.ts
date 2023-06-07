@@ -1,18 +1,19 @@
 #!/usr/bin/env node
-if (process.env.NODE_ENV === 'production') {
-  require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: true }, allowExpressions: true })
-}
+// if (process.env.NODE_ENV === 'production') {
+//   require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: true }, allowExpressions: true })
+// }
 
 /**
  * Module dependencies.
  */
-const app = require('../app')
-const debug = require('debug')('mdesign:server')
+import http from 'http'
+import app from '../app'
+
+const debug = (await import('debug')).default('mdesign:server')
 // var http = require('http')
-const https = require('https')
-const http = require('http')
-const config = require('../config')
-const fs = require('fs')
+// const https = require('https')
+// const http = require('http')
+import config from '../config'
 
 // var fs = require('fs')
 app.disable('x-powered-by')
@@ -20,7 +21,7 @@ app.disable('x-powered-by')
  * Get port from environment and store in Express.
  */
 const port = normalizePort(config.port)
-const httpsPort = normalizePort(config.httpsPort)
+// const httpsPort = normalizePort(config.httpsPort)
 app.set('port', port)
 app.set('trust proxy', true)
 /**
@@ -29,13 +30,14 @@ app.set('trust proxy', true)
 
 const server = http.createServer(app)
 
-const httpsServer = https.createServer(
-  {
-    key: fs.readFileSync('server.key'),
-    cert: fs.readFileSync('server.cert'),
-  },
-  app
-)
+/** NOTE: Disable HTTPS server for now. */
+// const httpsServer = https.createServer(
+//   {
+//     key: fs.readFileSync('server.key'),
+//     cert: fs.readFileSync('server.cert'),
+//   },
+//   app
+// )
 
 // /**
 //  * socket io run
@@ -52,13 +54,13 @@ server.on('listening', onListening)
 
 server.listen(port, '0.0.0.0')
 
-httpsServer.on('error', onError)
+// httpsServer.on('error', onError)
 
-httpsServer.on('listening', onListening)
+// httpsServer.on('listening', onListening)
 
-httpsServer.listen(httpsPort, '0.0.0.0')
+// httpsServer.listen(httpsPort, '0.0.0.0')
 
-console.log('Running on', port, httpsPort)
+debug('Running on', port /* httpsPort */)
 
 /**
  * Normalize a port into a number, string, or false.
@@ -107,7 +109,16 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 function onListening() {
-  const addr = server.address()
-  const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
-  debug('Listening on ' + bind)
+  try {
+    const addr = server.address()
+
+    if (addr === null) {
+      throw new Error('Could not get server address')
+    }
+
+    const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
+    debug('Listening on ' + bind)
+  } catch (err) {
+    debug('Error on listening', err)
+  }
 }

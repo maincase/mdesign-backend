@@ -1,19 +1,16 @@
 import { Application } from 'express'
-// import './globals'
+import { readdirSync } from 'fs'
 
-const debug = require('debug')('mdesign')
+const debug = (await import('debug')).default('mdesign:api')
 
-export default (app: Application) => {
-  require('./utils/responses').forEach((response: any) => {
-    app.use(response)
-  })
+export default async (app: Application) => {
+  ;(await import('./utils/responses')).default.forEach((response) => app.use(response))
 
   /**
    * catch error from myError or send badRequest
    */
-
-  app.use((req: any, res: any, next: any) => {
-    res.catchError = (error: any) => {
+  app.use((_, res: any, next) => {
+    res.catchError = (error) => {
       if (error.status) res.statusCode = error.status || 400
 
       if (!error.status) {
@@ -25,35 +22,44 @@ export default (app: Application) => {
         message: error.message,
         error: error.message,
       }
+
       return res.status(error.status).json(response)
     }
 
     next()
   })
 
-  const modules = [
-    // 'searches',
-    'user',
-  ]
+  /**
+   * Get active modules.
+   */
+  const IGNORE_MODULES: string[] = []
+  const modules = readdirSync('./app/modules', { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory() && !IGNORE_MODULES.includes(dirent.name))
+    .map((dirent) => dirent.name)
 
-  const mongoose = require('./db')(app.get('configuration').database.connection, 'Main')
+  /**
+   * Connect to database.
+   */
+  const mongoose = await (await import('./db')).default(app.get('configuration').database.connection, 'Main')
   global.db = { mongoose }
 
-  // loop through all folders in api/controllers
+  // loop through all folders in modules
   const modulesRoot = './modules/'
-  modules.forEach((ctrl) => {
-    // eslint-disable-next-line import/no-dynamic-require
-    const mod = require(`${modulesRoot}${ctrl}`)
-    app.map(mod.getRoute())
-  })
+  await Promise.all(
+    modules.map(async (ctrl) => {
+      const mod = (await import(`${modulesRoot}${ctrl}`)).default
+
+      app.map(mod?.getRoute?.())
+
+      mod?.setGlobalModel?.(mongoose)
+    })
+  )
 
   // catch 404
-  app.use((req: any, res: any) => {
-    res.notFound()
-  })
+  app.use((_, res: any) => res.notFound())
 
   // catch 5xx
-  app.use((err: any, req: any, res: any) => {
+  app.use((err: any, _, res: any) => {
     debug(err)
 
     const response = {

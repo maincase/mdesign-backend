@@ -1,36 +1,50 @@
-const debug = require('debug')('api')
+const debug = (await import('debug')).default('mdesign:server')
 
-module.exports = [
-  require('./badRequest'),
-  require('./created'),
-  require('./forbidden'),
-  require('./notFound'),
-  require('./ok'),
-  require('./serverError'),
-  require('./unauthorized'),
-  require('./tokenExpired'),
-  require('./notActiveUser'),
-  require('./conflict'),
-].map((desc) => {
-  return (req, res, next) => {
-    res[desc.name] = (data, code, message) => {
-      if (data instanceof Error) {
-        // log error
-        debug(data)
+export type ResponseOptions = {
+  badRequest: () => void
+  created: () => void
+  forbidden: () => void
+  notFound: () => void
+  ok: (data: any) => void
+  serverError: () => void
+  unauthorized: () => void
+  tokenExpired: () => void
+  notActive: () => void
+  conflict: () => void
 
-        // clear data variable, do not send it to client
-        // eslint-disable-next-line no-param-reassign
-        data = { message: data.message }
-      }
+  catchError: (error: any) => void
+}
 
-      const response = {
-        code: code || desc.code,
-        message: message || desc.message,
-        data: data || desc.data,
-      }
+export default [
+  (await import('./badRequest')).default,
+  (await import('./created')).default,
+  (await import('./forbidden')).default,
+  (await import('./notFound')).default,
+  (await import('./ok')).default,
+  (await import('./serverError')).default,
+  (await import('./unauthorized')).default,
+  (await import('./tokenExpired')).default,
+  (await import('./notActiveUser')).default,
+  (await import('./conflict')).default,
+].map((desc) => (_, res, next) => {
+  res[desc.name] = (data, code, message) => {
+    if (data instanceof Error) {
+      // log error
+      debug(data)
 
-      return res.status(desc.status).json(response)
+      // clear data variable, do not send it to client
+      // eslint-disable-next-line no-param-reassign
+      data = { message: data.message }
     }
-    next()
+
+    const response = {
+      code: code || desc.code,
+      message: message || desc.message,
+      data: data || desc.data,
+    }
+
+    res.status(desc.status).json(response)
   }
+
+  next()
 })

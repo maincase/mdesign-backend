@@ -2,7 +2,8 @@ export default {
   port: 8080,
   httpsPort: 8081,
   database: {
-    connection: '<CONNECTION_STRING_HERE>',
+    connection:
+      'mongodb+srv://mdesigndb:LxQjD9USz11rrq8B@cluster0.0gtzqr6.mongodb.net/mdesigndb?retryWrites=true&w=majority',
   },
   facebook: {
     clientID: '1077731956054779',
@@ -28,5 +29,19 @@ export default {
   secret: '@LEvnPW4aH3x.372NpTtTDpwQkRRJm',
   loginResetPassword: false,
   backendUrl: 'http://localhost:8080',
-  GCPProjectId: 'Add project id',
+  googleCloudStorage: {
+    projectId: 'modern-design-ai',
+    bucketName: 'modern-design-storage',
+    serviceAccountKey: 'modern-design-ai-8a0b91b760d4.json',
+  },
+  predictionProvider: {
+    stableDiffusion: {
+      URL: 'http://localhost:7080/predictions/stable-diffusion-1.0.0',
+      prompt:
+        'Transform the given space into a fully furnished %s %s room with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
+    },
+    detrResNet: {
+      URL: 'http://localhost:7080/predictions/detr-resnet-1.0.0',
+    },
+  },
 }
