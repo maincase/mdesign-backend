@@ -24,10 +24,10 @@ const port = normalizePort(config.port)
 // const httpsPort = normalizePort(config.httpsPort)
 app.set('port', port)
 app.set('trust proxy', true)
+
 /**
  * Create HTTP server.
  */
-
 const server = http.createServer(app)
 
 /** NOTE: Disable HTTPS server for now. */

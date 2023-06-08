@@ -1,4 +1,4 @@
-import { Storage } from '@google-cloud/storage'
+import { File, Storage } from '@google-cloud/storage'
 import debug from 'debug'
 import { Request, Response } from 'express'
 import got from 'got'
@@ -8,6 +8,7 @@ import Util from 'node:util'
 import config from '../../../config'
 import { ResponseOptions } from '../../utils/responses'
 import InteriorRepository from './InteriorRepository'
+import type { InteriorType, Render } from './InteriorTypes'
 
 class InteriorController {
   #interiorRepository: InteriorRepository
@@ -82,28 +83,34 @@ class InteriorController {
        * NOTE: Start object detection using detr-resnet model on newly created renders
        */
 
-      diffusionPredictions.forEach(async (pred) => {
-        debug('mdesign:ai:detr-resnet')(`Starting object detection using det-resnet model on ${pred}`)
+      const detrResNetPredictions: Partial<Render>[] = Array(diffusionPredictions.length).fill({})
 
-        const detrRes = await got
-          .post(config.predictionProvider.detrResNet.URL, {
-            retry: {
-              limit: 0,
-            },
-            json: {
-              instances: [
-                {
-                  image: pred,
-                },
-              ],
-            },
-          })
-          .json<{ predictions: [][] }>()
+      await Promise.all(
+        diffusionPredictions.map(async (pred, ind) => {
+          debug('mdesign:ai:detr-resnet')(`Starting object detection using det-resnet model on ${pred}`)
 
-        const detrPredictions = detrRes.predictions[0]
+          const detrRes = await got
+            .post(config.predictionProvider.detrResNet.URL, {
+              retry: {
+                limit: 0,
+              },
+              json: {
+                instances: [
+                  {
+                    image: pred,
+                  },
+                ],
+              },
+            })
+            .json<{ predictions: [][] }>()
 
-        debug('mdesign:ai:detr-resnet')(`Received predictions from detr-resnet model: ${detrPredictions}`)
-      })
+          const detrPredictions = detrRes.predictions[0]
+
+          detrResNetPredictions[ind].objects = detrPredictions
+
+          debug('mdesign:ai:detr-resnet')(`Received predictions from detr-resnet model: ${detrPredictions}`)
+        })
+      )
 
       /**
        * NOTE: Connect and upload files to GCP Storage
@@ -118,19 +125,31 @@ class InteriorController {
       // Upload original image to google storage
       debug('mdesign:cloud-storage')('Uploading original interior image and newly created renders to google storage')
 
-      const interiorImage = bucket.file(`interiors/${createHash('sha256').update(imageBase64).digest('hex')}.jpeg`)
+      const interiorImageName = `${createHash('sha256').update(imageBase64).digest('hex')}.jpeg`
+      const interiorImage = bucket.file(`interiors/${interiorImageName}`)
       interiorImage.save(Buffer.from(imageBase64, 'base64'))
 
+      // Create interior object which will be sent to repository
+      const interior: InteriorType = {
+        room,
+        style,
+        image: interiorImageName,
+        renders: detrResNetPredictions as Render[],
+      }
+
       // Upload newly created renders to google storage
-      let renderImage
-      diffusionPredictions.forEach((pred) => {
-        renderImage = bucket.file(
-          `interiors/${createHash('sha256').update(Buffer.from(pred, 'base64').toString('binary')).digest('hex')}.jpeg`
-        )
+      let renderImage: File
+      diffusionPredictions.forEach((pred, ind) => {
+        const renderImageName = `${createHash('sha256')
+          .update(Buffer.from(pred, 'base64').toString('binary'))
+          .digest('hex')}.jpeg`
+        renderImage = bucket.file(`interiors/${renderImageName}`)
         renderImage.save(Buffer.from(pred, 'base64'))
+
+        interior.renders[ind].image = renderImageName
       })
 
-      const data = await this.#interiorRepository.createInterior()
+      const data = await this.#interiorRepository.createInterior(interior)
 
       res.ok(data)
     } catch (err) {

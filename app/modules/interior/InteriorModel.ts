@@ -1,24 +1,11 @@
 import { model, Schema } from 'mongoose'
 
-const ObjectSchema = new Schema({
-  type: [],
-})
-
-const RenderSchema = new Schema({
-  image: { type: String },
-  objects: {
-    type: [ObjectSchema],
-  },
-})
-
 const InteriorSchema = new Schema(
   {
     room: { type: String, required: true },
     style: { type: String, required: true },
     image: { type: String, required: true },
-    render1: RenderSchema,
-    render2: RenderSchema,
-    render3: RenderSchema,
+    renders: [{ type: Schema.Types.ObjectId, ref: 'Render' }],
   },
   {
     collection: 'interiors',
