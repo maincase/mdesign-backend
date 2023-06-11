@@ -1,15 +1,10 @@
 import { model, Schema } from 'mongoose'
 
-const ObjectSchema = new Schema({
-  type: [],
-})
-
 const RenderSchema = new Schema(
   {
     image: { type: String, required: true },
-    objects: {
-      type: [ObjectSchema],
-    },
+    objects: [Schema.Types.Mixed],
+    interior: { type: Schema.Types.ObjectId, ref: 'Interior' },
   },
   {
     collection: 'renders',
@@ -24,7 +19,8 @@ const RenderSchema = new Schema(
 RenderSchema.methods.toJSON = function toJSON() {
   const obj = this.toObject()
   delete obj.__v
-  delete obj._id
+  // delete obj._id
+  // delete obj.id
 
   return obj
 }

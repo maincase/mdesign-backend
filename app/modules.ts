@@ -1,5 +1,6 @@
 import { Application } from 'express'
 import { readdirSync } from 'fs'
+import type { DB } from '../types/global'
 
 const debug = (await import('debug')).default('mdesign:api')
 
@@ -41,7 +42,7 @@ export default async (app: Application) => {
    * Connect to database.
    */
   const mongoose = await (await import('./db')).default(app.get('configuration').database.connection, 'Main')
-  global.db = { mongoose }
+  ;(global.db as Partial<DB>) = { mongoose }
 
   // loop through all folders in modules
   const modulesRoot = './modules/'
