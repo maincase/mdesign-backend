@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "./node_modules/.bin/cross-env DEBUG=mdesign:* NODE_ENV=development TS_NODE_FILES=true nodemon -e js,mjs,json,ts,mts --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm ./bin/www.ts'",
     "build": "./node_modules/.bin/cross-env NODE_ENV=production ./node_modules/.bin/rimraf build && ./node_modules/.bin/tsc && ./node_modules/.bin/copyfiles ./bin/www ./build",
-    "start:production": "./node_modules/.bin/cross-env NODE_ENV=production node ./build/bin/www",
+    "start:production": "./node_modules/.bin/cross-env DEBUG=mdesign:* NODE_ENV=production node --experimental-specifier-resolution=node ./build/bin/www",
     "eslint": "eslint --ext .ts,.tsx .",
     "eslint:check": "eslint --print-config . | eslint-config-prettier-check"
   },
@@ -36,6 +36,7 @@
     "@types/node": "^20.3.0",
     "@typescript-eslint/eslint-plugin": "^5.59.9",
     "@typescript-eslint/parser": "^5.59.9",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
     "eslint": "^8.42.0",
     "eslint-config-airbnb-typescript-prettier": "^5.0.0",

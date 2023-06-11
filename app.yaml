@@ -1,10 +1,13 @@
 service: mdesign-backend
-
+env: standard
 runtime: nodejs18
 
 instance_class: B2
 
-entrypoint: node ./node_modules/.bin/cross-env NODE_ENV=production node ./build/bin/www
+entrypoint: node --experimental-specifier-resolution=node ./build/bin/www
+
+build_env_variables:
+  GOOGLE_NODE_RUN_SCRIPTS: ''
 
 manual_scaling:
   instances: 1
@@ -14,3 +17,8 @@ handlers:
     secure: always
     redirect_http_response_code: 301
     script: auto
+
+env_variables:
+  HOST: '0.0.0.0'
+  PORT: '8080'
+  NODE_ENV: 'production'
