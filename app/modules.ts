@@ -1,5 +1,7 @@
 import { Application } from 'express'
 import { readdirSync } from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import type { DB } from '../types/global'
 
 const debug = (await import('debug')).default('mdesign:api')
@@ -34,7 +36,7 @@ export default async (app: Application) => {
    * Get active modules.
    */
   const IGNORE_MODULES: string[] = []
-  const modules = readdirSync('./app/modules', { withFileTypes: true })
+  const modules = readdirSync(`${path.dirname(fileURLToPath(import.meta.url))}/modules`, { withFileTypes: true })
     .filter((dirent) => dirent.isDirectory() && !IGNORE_MODULES.includes(dirent.name))
     .map((dirent) => dirent.name)
 
