@@ -44,4 +44,5 @@ export default {
       URL: 'http://localhost:7080/predictions/detr-resnet-1.0.0',
     },
   },
+  paginationLimit: 10,
 }

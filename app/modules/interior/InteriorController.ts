@@ -4,10 +4,35 @@ import { ResponseOptions } from '../../utils/responses'
 import InteriorRepository from './InteriorRepository'
 import type { InteriorType, Render } from './InteriorTypes'
 
+/**
+ *
+ */
 class InteriorController {
-  static async getInteriors(req: any, res: any) {
+  /**
+   *
+   * @param req
+   * @param res
+   */
+  static async getInteriors(req: Request, res: Response & ResponseOptions) {
     try {
-      const data = await InteriorRepository.getInteriors()
+      const { limit: _limit, skip: _skip } = req.query
+
+      if (!_limit || !_skip) {
+        throw new Error('Please provide limit and skip values')
+      }
+
+      const limit = Number(_limit)
+      const skip = Number(_skip)
+
+      if (Number.isNaN(limit) || Number.isNaN(skip)) {
+        throw new Error('Please provide valid limit and skip values')
+      }
+
+      debug('mdesign:interior:controller')(`Getting interiors with limit: ${limit} and skip: ${skip}`)
+
+      const data = await InteriorRepository.getInteriors({ limit, skip })
+
+      debug('mdesign:interior:controller')(`Got interiors: ${JSON.stringify(data)}`)
 
       res.ok(data)
     } catch (err) {
@@ -15,6 +40,11 @@ class InteriorController {
     }
   }
 
+  /**
+   *
+   * @param req
+   * @param res
+   */
   static async createInterior(req: Request, res: Response & ResponseOptions) {
     try {
       if (!req.file) {
@@ -79,11 +109,11 @@ class InteriorController {
        * NOTE: Save final interior object to database.
        */
 
-      debug('mdesign:db:interior')('Saving interior object to database...')
+      debug('mdesign:interior:db')('Saving interior object to database...')
 
       const data = await InteriorRepository.saveToDB(interior)
 
-      debug('mdesign:db:interior')(`Saved new interior with renders and objects to database: ${JSON.stringify(data)}`)
+      debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${JSON.stringify(data)}`)
 
       res.ok(data)
     } catch (err) {

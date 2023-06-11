@@ -19,8 +19,10 @@ const RenderSchema = new Schema(
 RenderSchema.methods.toJSON = function toJSON() {
   const obj = this.toObject()
   delete obj.__v
-  // delete obj._id
+  delete obj._id
   // delete obj.id
+
+  delete obj.createdAt
 
   return obj
 }

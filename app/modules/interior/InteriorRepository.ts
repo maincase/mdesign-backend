@@ -13,10 +13,36 @@ class InteriorRepository {
     keyFilename: path.join(config.googleCloudStorage.serviceAccountKey),
   }).bucket(config.googleCloudStorage.bucketName)
 
-  static async getInteriors() {
-    return []
+  /**
+   *
+   * @returns
+   */
+  static async getInteriors({ limit: _limit, skip }: { limit: number; skip: number }) {
+    let limit = _limit
+
+    if (limit > config.paginationLimit) {
+      limit = config.paginationLimit
+    }
+
+    const resultInteriors = await global.db.InteriorModel.find()
+      .skip(skip)
+      .limit(limit)
+      .sort({ updatedAt: -1 })
+      .transform((interiors) => interiors.map((interior) => interior.toJSON()))
+      .populate({
+        path: 'renders',
+        select: '-interior -createdAt -__v',
+        transform: (render) => render.toJSON(),
+      })
+
+    return resultInteriors
   }
 
+  /**
+   *
+   * @param image
+   * @returns
+   */
   static saveImageToGCP(image: string): string {
     const imageName = `${createHash('sha256').update(image).digest('hex')}.jpeg`
     const interiorImage = InteriorRepository.#bucket.file(`interiors/${imageName}`)
@@ -24,6 +50,11 @@ class InteriorRepository {
     return imageName
   }
 
+  /**
+   *
+   * @param inter
+   * @returns
+   */
   static async saveToDB(inter: InteriorType) {
     const interior = { ...inter }
 
@@ -52,11 +83,24 @@ class InteriorRepository {
 
     await interiorDoc.save()
 
-    const resultInterior = (await interiorDoc.populate('renders', '-interior -id -__v')).toJSON()
+    const resultInterior = (
+      await interiorDoc.populate({
+        path: 'renders',
+        select: '-interior -__v -createdAt',
+        transform: (render) => render.toJSON(),
+      })
+    ).toJSON()
 
     return resultInterior
   }
 
+  /**
+   *
+   * @param image
+   * @param room
+   * @param style
+   * @returns
+   */
   static async createDiffusionPredictions(image: string, room: string, style: string): Promise<string[]> {
     // Format prompt with input from user
     const prompt = Util.format(config.predictionProvider.stableDiffusion.prompt, room, style)
@@ -87,6 +131,11 @@ class InteriorRepository {
     return diffusionPredictions
   }
 
+  /**
+   *
+   * @param renders
+   * @returns
+   */
   static async createDETRResNetPredictions(renders: string[]): Promise<Partial<Render>[]> {
     const detrResNetPredictions: Partial<Render>[] = Array(renders.length).fill({})
 
