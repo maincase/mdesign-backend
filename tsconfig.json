@@ -13,7 +13,7 @@
     "checkJs": false,
     "noImplicitAny": false,
     "resolveJsonModule": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "declaration": false,
     "strictFunctionTypes": true,
     "strictBindCallApply": true,
