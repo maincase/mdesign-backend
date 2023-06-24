@@ -45,6 +45,31 @@ class InteriorController {
    * @param req
    * @param res
    */
+  static async getInterior(req: Request, res: Response & ResponseOptions) {
+    try {
+      const { id } = req.params
+
+      if (!id) {
+        throw new Error('No interior id provided')
+      }
+
+      debug('mdesign:interior:controller')(`Getting interior with id: ${id}`)
+
+      const data = await InteriorRepository.getInteriorById(id)
+
+      debug('mdesign:interior:controller')(`Got interior: ${JSON.stringify(data)}`)
+
+      res.ok(data)
+    } catch (err) {
+      res.catchError(err)
+    }
+  }
+
+  /**
+   *
+   * @param req
+   * @param res
+   */
   static async createInterior(req: Request, res: Response & ResponseOptions) {
     try {
       if (!req.file) {

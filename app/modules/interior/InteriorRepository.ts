@@ -39,6 +39,21 @@ class InteriorRepository {
   }
 
   /**
+   *
+   * @param id
+   * @returns
+   */
+  static async getInteriorById(id: string) {
+    const resultInterior = await global.db.InteriorModel.findById(id).populate({
+      path: 'renders',
+      select: '-interior -createdAt -__v',
+      transform: (render) => render.toJSON(),
+    })
+
+    return resultInterior
+  }
+
+  /**
    * Create interior initial record
    *
    * @returns mongo document of interior
@@ -47,16 +62,6 @@ class InteriorRepository {
     const interiorDoc = new global.db.InteriorProgressModel()
 
     return interiorDoc.save()
-  }
-
-  /**
-   *
-   * @param id
-   * @returns
-   */
-  // NOTE: This method is not implemented yet
-  static async getInteriorById(id: string) {
-    return id
   }
 
   /**
