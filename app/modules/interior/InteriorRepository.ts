@@ -39,6 +39,27 @@ class InteriorRepository {
   }
 
   /**
+   * Create interior initial record
+   *
+   * @returns mongo document of interior
+   */
+  static async createRecord() {
+    const interiorDoc = new global.db.InteriorProgressModel()
+
+    return interiorDoc.save()
+  }
+
+  /**
+   *
+   * @param id
+   * @returns
+   */
+  // NOTE: This method is not implemented yet
+  static async getInteriorById(id: string) {
+    return id
+  }
+
+  /**
    *
    * @param image
    * @returns
@@ -55,7 +76,7 @@ class InteriorRepository {
    * @param inter
    * @returns
    */
-  static async saveToDB(inter: InteriorType) {
+  static async updateRecord(id: string, inter: InteriorType) {
     const interior = { ...inter }
 
     if (!interior?.renders || !Array.isArray(interior.renders)) {
@@ -68,17 +89,23 @@ class InteriorRepository {
       delete (interior as Partial<InteriorType>).renders
     }
 
-    const interiorDoc = new global.db.InteriorModel(interior)
+    const interiorDoc = await global.db.InteriorModel.findById(id)
+
+    if (!interiorDoc) {
+      throw new Error('Interior not found')
+    }
+
+    interiorDoc.set(interior)
 
     renders.forEach((render) => {
       const renderDoc = new global.db.RenderModel({
         ...render,
-        interior: interiorDoc._id,
+        interior: interiorDoc.id,
       })
 
       renderDoc.save()
 
-      interiorDoc.renders.push(renderDoc._id)
+      interiorDoc.renders.push(renderDoc.id)
     })
 
     await interiorDoc.save()
@@ -101,7 +128,12 @@ class InteriorRepository {
    * @param style
    * @returns
    */
-  static async createDiffusionPredictions(image: string, room: string, style: string): Promise<string[]> {
+  static async createDiffusionPredictions(
+    id: string,
+    image: string,
+    room: string,
+    style: string
+  ): Promise<{ id: string; renders: [] }> {
     // Format prompt with input from user
     const prompt = Util.format(config.predictionProvider.stableDiffusion.prompt, room, style)
 
@@ -113,6 +145,7 @@ class InteriorRepository {
         json: {
           instances: [
             {
+              id,
               image,
               prompt,
               inference_steps: 100,
@@ -124,7 +157,7 @@ class InteriorRepository {
           ],
         },
       })
-      .json<{ predictions: [][] }>()
+      .json<{ predictions: { id: string; renders: [] }[] }>()
 
     const diffusionPredictions = diffusionRes.predictions[0]
 

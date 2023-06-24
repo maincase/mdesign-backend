@@ -36,12 +36,12 @@ export default {
   },
   predictionProvider: {
     stableDiffusion: {
-      URL: 'http://localhost:7080/predictions/stable-diffusion-1.0.0',
+      URL: 'http://localhost:7080/predictions/stable_diffusion-0.0.1',
       prompt:
         'Transform the given space into a fully furnished %s %s room with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
     },
     detrResNet: {
-      URL: 'http://localhost:7080/predictions/detr-resnet-1.0.0',
+      URL: 'http://localhost:7080/predictions/detr_resnet-0.0.1',
     },
   },
   paginationLimit: 10,

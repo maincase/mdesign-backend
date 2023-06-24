@@ -59,6 +59,12 @@ class InteriorController {
 
       const imageBase64 = Buffer.from(req.file.buffer).toString('base64')
 
+      // Create initial record for interior in database
+      const interiorDoc = await InteriorRepository.createRecord()
+
+      // As soon as we register record in database we return the id to user
+      res.ok(interiorDoc)
+
       /**
        * NOTE: Start image generation using stable diffusion model
        */
@@ -66,10 +72,15 @@ class InteriorController {
         `Starting image generation using stable diffusion on ${imageBase64} with room: ${room} and style: ${style}`
       )
 
-      const diffusionPredictions = await InteriorRepository.createDiffusionPredictions(imageBase64, room, style)
+      const diffusionPredictions = await InteriorRepository.createDiffusionPredictions(
+        interiorDoc.id,
+        imageBase64,
+        room,
+        style
+      )
 
       debug('mdesign:ai:stable-diffusion')(
-        `Received predictions from stable diffusion model: ${diffusionPredictions.length}`
+        `Received predictions from stable diffusion model: ${diffusionPredictions.renders.length}`
       )
 
       /**
@@ -77,7 +88,7 @@ class InteriorController {
        */
       debug('mdesign:ai:detr-resnet')('Starting object detection using det-resnet model')
 
-      const detrResNetPredictions = await InteriorRepository.createDETRResNetPredictions(diffusionPredictions)
+      const detrResNetPredictions = await InteriorRepository.createDETRResNetPredictions(diffusionPredictions.renders)
 
       debug('mdesign:ai:detr-resnet')(`Received predictions from detr-resnet model: ${detrResNetPredictions}`)
 
@@ -99,7 +110,7 @@ class InteriorController {
       }
 
       // Upload newly created renders to google storage
-      diffusionPredictions.forEach((pred, ind) => {
+      diffusionPredictions.renders.forEach((pred, ind) => {
         const renderImageName = InteriorRepository.saveImageToGCP(pred)
 
         interior.renders[ind].image = renderImageName
@@ -111,11 +122,9 @@ class InteriorController {
 
       debug('mdesign:interior:db')('Saving interior object to database...')
 
-      const data = await InteriorRepository.saveToDB(interior)
+      const data = await InteriorRepository.updateRecord(interiorDoc.id, interior)
 
       debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${JSON.stringify(data)}`)
-
-      res.ok(data)
     } catch (err) {
       res.catchError(err)
     }
