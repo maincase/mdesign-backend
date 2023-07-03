@@ -3,6 +3,7 @@ import got from 'got'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
 import Util from 'node:util'
+import * as R from 'remeda'
 import config from '../../../config'
 import { InteriorType, Render } from './InteriorTypes'
 
@@ -14,8 +15,9 @@ class InteriorRepository {
   }).bucket(config.googleCloudStorage.bucketName)
 
   /**
+   * Get interiors with pagination
    *
-   * @returns
+   * @returns array of interiors
    */
   static async getInteriors({ limit: _limit, skip }: { limit: number; skip: number }) {
     let limit = _limit
@@ -39,6 +41,7 @@ class InteriorRepository {
   }
 
   /**
+   *  Get specific interior by id
    *
    * @param id
    * @returns
@@ -56,7 +59,7 @@ class InteriorRepository {
   /**
    * Create interior initial record
    *
-   * @returns mongo document of interior
+   * @returns mongo interior document
    */
   static async createRecord() {
     const interiorDoc = new global.db.InteriorProgressModel()
@@ -153,11 +156,13 @@ class InteriorRepository {
               id,
               image,
               prompt,
-              inference_steps: 100,
-              inference_strength: 0.65,
-              inference_guidance_scale: 25,
-              num_return_images: 3,
-              generator_seed: -11,
+              ...R.pick(config.predictionProvider.stableDiffusion, [
+                'inference_steps',
+                'inference_strength',
+                'inference_guidance_scale',
+                'num_return_images',
+                'generator_seed',
+              ]),
             },
           ],
         },

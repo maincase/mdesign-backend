@@ -39,6 +39,11 @@ export default {
       URL: 'http://localhost:7080/predictions/stable_diffusion-0.0.1',
       prompt:
         'Transform the given space into a fully furnished %s %s room with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
+      inference_steps: 100,
+      inference_strength: 0.65,
+      inference_guidance_scale: 25,
+      num_return_images: 3,
+      generator_seed: -11,
     },
     detrResNet: {
       URL: 'http://localhost:7080/predictions/detr_resnet-0.0.1',

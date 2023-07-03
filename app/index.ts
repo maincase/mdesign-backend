@@ -1,5 +1,6 @@
 import bodyParser from 'body-parser'
 import compression from 'compression'
+// import cors from 'cors'
 import express from 'express'
 import helmet from 'helmet'
 import multer from 'multer'
@@ -11,6 +12,7 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 const app = express()
 app.use(compression())
 app.use(helmet())
+// app.use(cors())
 
 const multerMid = Util.promisify(
   multer({
