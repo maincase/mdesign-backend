@@ -180,10 +180,10 @@ class InteriorRepository {
    * @returns
    */
   static async createDETRResNetPredictions(renders: string[]): Promise<Partial<Render>[]> {
-    const detrResNetPredictions: Partial<Render>[] = Array(renders.length).fill({})
+    const detrResNetPredictions: Partial<Render>[] = []
 
     await Promise.all(
-      renders.map(async (pred, ind) => {
+      renders.map(async (pred) => {
         const detrRes = await got
           .post(config.predictionProvider.detrResNet.URL, {
             retry: {
@@ -201,7 +201,9 @@ class InteriorRepository {
 
         const detrPredictions = detrRes.predictions[0]
 
-        detrResNetPredictions[ind].objects = detrPredictions
+        detrResNetPredictions.push({
+          objects: detrPredictions,
+        })
       })
     )
 
