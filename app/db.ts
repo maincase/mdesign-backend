@@ -24,6 +24,7 @@ export default async (connection, name = '') => {
     // promiseLibrary: global.Promise,
     minPoolSize: 5,
     // useCreateIndex: true,
+    autoIndex: true,
     useNewUrlParser: true,
     useUnifiedTopology: true,
   }

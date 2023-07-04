@@ -1,8 +1,11 @@
 import debug from 'debug'
 import { Request, Response } from 'express'
+import { createHash } from 'node:crypto'
 import { ResponseOptions } from '../../utils/responses'
 import InteriorRepository from './InteriorRepository'
 import type { InteriorType, Render } from './InteriorTypes'
+
+const calculateImgSha = (image) => `${createHash('sha256').update(image).digest('hex')}.jpeg`
 
 /**
  *
@@ -84,8 +87,10 @@ class InteriorController {
 
       const imageBase64 = Buffer.from(req.file.buffer).toString('base64')
 
+      const imageName = calculateImgSha(imageBase64)
+
       // Create initial record for interior in database
-      const interiorDoc = await InteriorRepository.createRecord()
+      const interiorDoc = await InteriorRepository.createRecord(imageName, room, style)
 
       // As soon as we register record in database we return the id to user
       res.ok(interiorDoc)
@@ -124,19 +129,21 @@ class InteriorController {
       // Upload original image to google storage
       debug('mdesign:cloud-storage')('Uploading original interior image and newly created renders to google storage')
 
-      const interiorImageName = InteriorRepository.saveImageToGCP(imageBase64)
+      InteriorRepository.saveImageToGCP(imageName, imageBase64)
 
       // Create interior object which will be sent to repository
       const interior: InteriorType = {
         room,
         style,
-        image: interiorImageName,
+        image: imageName,
         renders: detrResNetPredictions as Render[],
       }
 
       // Upload newly created renders to google storage
       diffusionPredictions.renders.forEach((pred, ind) => {
-        const renderImageName = InteriorRepository.saveImageToGCP(pred)
+        const renderImageName = calculateImgSha(pred)
+
+        InteriorRepository.saveImageToGCP(renderImageName, pred)
 
         interior.renders[ind].image = renderImageName
       })

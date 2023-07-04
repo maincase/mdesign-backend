@@ -1,6 +1,5 @@
 import { Storage } from '@google-cloud/storage'
 import got from 'got'
-import { createHash } from 'node:crypto'
 import path from 'node:path'
 import Util from 'node:util'
 import * as R from 'remeda'
@@ -61,8 +60,11 @@ class InteriorRepository {
    *
    * @returns mongo interior document
    */
-  static async createRecord() {
-    const interiorDoc = new global.db.InteriorProgressModel()
+  static async createRecord(image: string, room: string, style: string) {
+    const interiorDoc = new global.db.InteriorModel()
+    interiorDoc.image = image
+    interiorDoc.room = room
+    interiorDoc.style = style
 
     return interiorDoc.save()
   }
@@ -72,11 +74,9 @@ class InteriorRepository {
    * @param image
    * @returns
    */
-  static saveImageToGCP(image: string): string {
-    const imageName = `${createHash('sha256').update(image).digest('hex')}.jpeg`
-    const interiorImage = InteriorRepository.#bucket.file(`interiors/${imageName}`)
+  static saveImageToGCP(name: string, image: string) {
+    const interiorImage = InteriorRepository.#bucket.file(`interiors/${name}`)
     interiorImage.save(Buffer.from(image, 'base64'))
-    return imageName
   }
 
   /**

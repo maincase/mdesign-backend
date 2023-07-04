@@ -4,7 +4,7 @@ const InteriorSchema = new Schema(
   {
     room: { type: String, required: true },
     style: { type: String, required: true },
-    image: { type: String, required: true },
+    image: { type: String, required: true, unique: true },
     renders: [{ type: Schema.Types.ObjectId, ref: 'Render' }],
   },
   {
