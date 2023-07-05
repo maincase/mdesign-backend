@@ -87,7 +87,7 @@ class InteriorController {
 
       const imageBase64 = Buffer.from(req.file.buffer).toString('base64')
 
-      const imageName = calculateImgSha(imageBase64)
+      const imageName = calculateImgSha(`${imageBase64}+${room}+${style}`)
 
       // Create initial record for interior in database
       const interiorDoc = await InteriorRepository.createRecord(imageName, room, style)
