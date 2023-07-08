@@ -33,7 +33,7 @@ class InteriorRepository {
       .populate({
         path: 'renders',
         select: '-interior -createdAt -__v',
-        transform: (render) => render.toJSON(),
+        transform: (render) => render?.toJSON(),
       })
 
     return resultInteriors
@@ -65,6 +65,7 @@ class InteriorRepository {
     interiorDoc.image = image
     interiorDoc.room = room
     interiorDoc.style = style
+    interiorDoc.progress = 0
 
     return interiorDoc.save()
   }
@@ -76,7 +77,7 @@ class InteriorRepository {
    */
   static saveImageToGCP(name: string, image: string) {
     const interiorImage = InteriorRepository.#bucket.file(`interiors/${name}`)
-    interiorImage.save(Buffer.from(image, 'base64'))
+    return interiorImage.save(Buffer.from(image, 'base64'))
   }
 
   /**

@@ -129,7 +129,7 @@ class InteriorController {
       // Upload original image to google storage
       debug('mdesign:cloud-storage')('Uploading original interior image and newly created renders to google storage')
 
-      InteriorRepository.saveImageToGCP(imageName, imageBase64)
+      await InteriorRepository.saveImageToGCP(imageName, imageBase64)
 
       // Create interior object which will be sent to repository
       const interior: InteriorType = {
@@ -140,20 +140,17 @@ class InteriorController {
       }
 
       // Upload newly created renders to google storage
-      diffusionPredictions.renders.forEach((pred, ind) => {
+      for (const [ind, pred] of diffusionPredictions.renders.entries()) {
         const renderImageName = calculateImgSha(pred)
 
-        InteriorRepository.saveImageToGCP(renderImageName, pred)
+        await InteriorRepository.saveImageToGCP(renderImageName, pred)
 
         interior.renders[ind].image = renderImageName
-      })
-
-      /**
-       * NOTE: Save final interior object to database.
-       */
+      }
 
       debug('mdesign:interior:db')('Saving interior object to database...')
 
+      // Save final interior object to database.
       const data = await InteriorRepository.updateRecord(interiorDoc.id, interior)
 
       debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${JSON.stringify(data)}`)
