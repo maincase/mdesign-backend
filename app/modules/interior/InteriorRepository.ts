@@ -4,14 +4,15 @@ import path from 'node:path'
 import Util from 'node:util'
 import * as R from 'remeda'
 import config from '../../../config'
+import Utils from '../../utils/Utils'
 import { InteriorType, Render } from './InteriorTypes'
 
 class InteriorRepository {
   // GCP Bucket for uploading interior images
   static #bucket = new Storage({
-    projectId: config.googleCloudStorage.projectId,
-    keyFilename: path.join(config.googleCloudStorage.serviceAccountKey),
-  }).bucket(config.googleCloudStorage.bucketName)
+    // projectId: config.googleCloud.projectId,
+    keyFilename: path.join(config.googleCloud.storage.serviceAccountKey),
+  }).bucket(config.googleCloud.storage.bucketName)
 
   /**
    * Get interiors with pagination
@@ -146,11 +147,22 @@ class InteriorRepository {
     // Format prompt with input from user
     const prompt = Util.format(config.predictionProvider.stableDiffusion.prompt, room, style)
 
+    const predictionURL = config.predictionProvider.stableDiffusion.URL as string
+
+    const token = await Utils.getGCPToken()
+
+    let headers
+
+    if (predictionURL.includes('aiplatform.googleapis.com') && !!token) {
+      headers = { Authorization: `Bearer ${token}` }
+    }
+
     const diffusionRes = await got
-      .post(config.predictionProvider.stableDiffusion.URL, {
+      .post(predictionURL, {
         retry: {
           limit: 0,
         },
+        ...(!!headers ? { headers } : {}),
         json: {
           instances: [
             {
@@ -181,15 +193,26 @@ class InteriorRepository {
    * @returns
    */
   static async createDETRResNetPredictions(renders: string[]): Promise<Partial<Render>[]> {
+    const predictionURL = config.predictionProvider.detrResNet.URL as string
+
+    const token = await Utils.getGCPToken()
+
+    let headers
+
+    if (predictionURL.includes('aiplatform.googleapis.com') && !!token) {
+      headers = { Authorization: `Bearer ${token}` }
+    }
+
     const detrResNetPredictions: Partial<Render>[] = []
 
     await Promise.all(
       renders.map(async (pred) => {
         const detrRes = await got
-          .post(config.predictionProvider.detrResNet.URL, {
+          .post(predictionURL, {
             retry: {
               limit: 0,
             },
+            ...(!!headers ? { headers } : {}),
             json: {
               instances: [
                 {

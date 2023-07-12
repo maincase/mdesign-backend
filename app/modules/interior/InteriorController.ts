@@ -154,8 +154,14 @@ class InteriorController {
       const data = await InteriorRepository.updateRecord(interiorDoc.id, interior)
 
       debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${JSON.stringify(data)}`)
-    } catch (err) {
-      res.catchError(err)
+    } catch (err: any) {
+      // NOTE: If response is already sent, we can't send another response
+      if (!res.headersSent) {
+        res.catchError(err)
+      } else {
+        // NOTE: Handle error when res.ok got sent but rest of the function failed to execute
+        debug('mdesign:interior:controller')(`Error occurred while creating interior: ${err.message}`)
+      }
     }
   }
 }

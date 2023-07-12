@@ -1,18 +1,10 @@
 export default {
-  port: 8080,
-  httpsPort: 8081,
-  database: {
-    connection:
-      'mongodb+srv://mdesigndb:LxQjD9USz11rrq8B@cluster0.0gtzqr6.mongodb.net/mdesigndb?retryWrites=true&w=majority',
-  },
-  predictionProvider: {
-    stableDiffusion: {
-      URL: 'http://localhost:7080/predictions/stable_diffusion-0.0.1',
-      prompt:
-        'Transform the given space into a fully furnished %s %s room with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
-    },
-    detrResNet: {
-      URL: 'http://localhost:7080/predictions/detr_resnet-0.0.1',
-    },
-  },
+  // predictionProvider: {
+  //   stableDiffusion: {
+  //     URL: 'https://us-central1-aiplatform.googleapis.com/v1/projects/modern-design-ai/locations/us-central1/endpoints/6296643607528996864:predict',
+  //   },
+  //   detrResNet: {
+  //     URL: 'https://us-central1-aiplatform.googleapis.com/v1/projects/modern-design-ai/locations/us-central1/endpoints/7022286097489068032:predict',
+  //   },
+  // },
 }

@@ -1,4 +1,6 @@
 import bcrypt from 'bcrypt-nodejs'
+import { GoogleAuth } from 'google-auth-library'
+import config from '../../config'
 
 const AUTH_HEADER = 'authorization'
 const DEFAULT_TOKEN_BODY_FIELD = 'access_token'
@@ -37,5 +39,25 @@ export default class Utils {
 
   static validateEmail(v: string): boolean {
     return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(v)
+  }
+
+  /**
+   *
+   * @returns
+   */
+  static async getGCPToken() {
+    const auth = new GoogleAuth({
+      scopes: 'https://www.googleapis.com/auth/cloud-platform',
+      keyFilename: config.googleCloud.ai.serviceAccountKey,
+    })
+
+    const client = await auth.getClient()
+    const token = await client.getAccessToken()
+
+    if (!!token?.token) {
+      return token.token
+    }
+
+    return undefined
   }
 }

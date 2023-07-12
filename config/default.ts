@@ -29,14 +29,19 @@ export default {
   secret: '@LEvnPW4aH3x.372NpTtTDpwQkRRJm',
   loginResetPassword: false,
   backendUrl: 'http://localhost:8080',
-  googleCloudStorage: {
-    projectId: 'modern-design-ai',
-    bucketName: 'modern-design-storage',
-    serviceAccountKey: 'modern-design-ai-8a0b91b760d4.json',
+  googleCloud: {
+    // projectId: 'modern-design-ai',
+    storage: {
+      bucketName: 'modern-design-storage',
+      serviceAccountKey: 'modern-design-ai-8a0b91b760d4.json',
+    },
+    ai: {
+      serviceAccountKey: 'modern-design-ai-9994297dd866.json',
+    },
   },
   predictionProvider: {
     stableDiffusion: {
-      URL: 'http://localhost:7080/predictions/stable_diffusion-0.0.1',
+      URL: 'http://localhost:7080/predictions/stable_diffusion-0.0.39',
       prompt:
         'Transform the given space into a fully furnished %s %s room with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
       inference_steps: 100,
@@ -46,7 +51,7 @@ export default {
       generator_seed: -11,
     },
     detrResNet: {
-      URL: 'http://localhost:7080/predictions/detr_resnet-0.0.1',
+      URL: 'http://localhost:7080/predictions/detr_resnet-0.0.39',
     },
   },
   paginationLimit: 10,
