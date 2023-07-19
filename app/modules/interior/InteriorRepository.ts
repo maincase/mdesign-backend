@@ -5,7 +5,7 @@ import Util from 'node:util'
 import * as R from 'remeda'
 import config from '../../../config'
 import Utils from '../../utils/Utils'
-import { InteriorType, Render } from './InteriorTypes'
+import { InteriorType } from './InteriorTypes'
 
 class InteriorRepository {
   // GCP Bucket for uploading interior images
@@ -13,6 +13,8 @@ class InteriorRepository {
     // projectId: config.googleCloud.projectId,
     keyFilename: path.join(config.googleCloud.storage.serviceAccountKey),
   }).bucket(config.googleCloud.storage.bucketName)
+
+  static #gcpToken
 
   /**
    * Get interiors with pagination
@@ -57,16 +59,20 @@ class InteriorRepository {
   }
 
   /**
-   * Create interior initial record
    *
+   * @param image
+   * @param room
+   * @param style
+   * @param initialProgress When creating interior record, record creation itself is 1.5% progress of total progress
    * @returns mongo interior document
    */
-  static async createRecord(image: string, room: string, style: string) {
+  static async createRecord(image: string, room: string, style: string, initialProgress: number = 1.5) {
     const interiorDoc = new global.db.InteriorModel()
     interiorDoc.image = image
     interiorDoc.room = room
     interiorDoc.style = style
-    interiorDoc.progress = 0
+
+    interiorDoc.progress = initialProgress
 
     return interiorDoc.save()
   }
@@ -77,7 +83,7 @@ class InteriorRepository {
    * @returns
    */
   static saveImageToGCP(name: string, image: string) {
-    const interiorImage = InteriorRepository.#bucket.file(`interiors/${name}`)
+    const interiorImage = this.#bucket.file(`interiors/${name}`)
     return interiorImage.save(Buffer.from(image, 'base64'))
   }
 
@@ -149,12 +155,14 @@ class InteriorRepository {
 
     const predictionURL = config.predictionProvider.stableDiffusion.URL as string
 
-    const token = await Utils.getGCPToken()
+    if (!this.#gcpToken) {
+      this.#gcpToken = await Utils.getGCPToken()
+    }
 
     let headers
 
-    if (predictionURL.includes('aiplatform.googleapis.com') && !!token) {
-      headers = { Authorization: `Bearer ${token}` }
+    if (predictionURL.includes('aiplatform.googleapis.com') && !!this.#gcpToken) {
+      headers = { Authorization: `Bearer ${this.#gcpToken}` }
     }
 
     const diffusionRes = await got
@@ -190,48 +198,49 @@ class InteriorRepository {
   /**
    *
    * @param renders
-   * @returns
    */
-  static async createDETRResNetPredictions(renders: string[]): Promise<Partial<Render>[]> {
+  static async *createDETRResNetPredictions(renders: string[]) {
     const predictionURL = config.predictionProvider.detrResNet.URL as string
 
-    const token = await Utils.getGCPToken()
+    if (!this.#gcpToken) {
+      this.#gcpToken = await Utils.getGCPToken()
+    }
 
     let headers
 
-    if (predictionURL.includes('aiplatform.googleapis.com') && !!token) {
-      headers = { Authorization: `Bearer ${token}` }
+    if (predictionURL.includes('aiplatform.googleapis.com') && !!this.#gcpToken) {
+      headers = { Authorization: `Bearer ${this.#gcpToken}` }
     }
 
-    const detrResNetPredictions: Partial<Render>[] = []
+    let processedCount = 0
 
-    await Promise.all(
-      renders.map(async (pred) => {
-        const detrRes = await got
-          .post(predictionURL, {
-            retry: {
-              limit: 0,
-            },
-            ...(!!headers ? { headers } : {}),
-            json: {
-              instances: [
-                {
-                  image: pred,
-                },
-              ],
-            },
-          })
-          .json<{ predictions: [][] }>()
+    while (processedCount < renders.length) {
+      let pred = renders[processedCount]
 
-        const detrPredictions = detrRes.predictions[0]
+      processedCount += 1
 
-        detrResNetPredictions.push({
-          objects: detrPredictions,
+      const detrRes = await got
+        .post(predictionURL, {
+          retry: {
+            limit: 0,
+          },
+          ...(!!headers ? { headers } : {}),
+          json: {
+            instances: [
+              {
+                image: pred,
+              },
+            ],
+          },
         })
-      })
-    )
+        .json<{ predictions: [][] }>()
 
-    return detrResNetPredictions
+      const detrPredictions = detrRes.predictions[0]
+
+      yield {
+        objects: detrPredictions,
+      }
+    }
   }
 }
 

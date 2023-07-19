@@ -118,7 +118,19 @@ class InteriorController {
        */
       debug('mdesign:ai:detr-resnet')('Starting object detection using det-resnet model')
 
-      const detrResNetPredictions = await InteriorRepository.createDETRResNetPredictions(diffusionPredictions.renders)
+      const detrResNetPredictions: Partial<Render>[] = []
+
+      // NOTE: Finished with rendering new interiors, and we have total of 81.5% progress including initial db record progress
+      interiorDoc.progress = 81.5
+
+      for await (const pred of InteriorRepository.createDETRResNetPredictions(diffusionPredictions.renders)) {
+        detrResNetPredictions.push(pred)
+
+        // Each object prediction done on each of the new renders will be additional 3% progress
+        interiorDoc.progress += 3
+
+        await interiorDoc.save()
+      }
 
       debug('mdesign:ai:detr-resnet')(`Received predictions from detr-resnet model: ${detrResNetPredictions}`)
 
@@ -131,8 +143,13 @@ class InteriorController {
 
       await InteriorRepository.saveImageToGCP(imageName, imageBase64)
 
+      // NOTE: Saving each image to google storage will be additional 2% progress
+      interiorDoc.progress += 2
+
+      await interiorDoc.save()
+
       // Create interior object which will be sent to repository
-      const interior: InteriorType = {
+      const interior: InteriorType & { progress?: number } = {
         room,
         style,
         image: imageName,
@@ -146,9 +163,16 @@ class InteriorController {
         await InteriorRepository.saveImageToGCP(renderImageName, pred)
 
         interior.renders[ind].image = renderImageName
+
+        interiorDoc.progress += 2
+
+        await interiorDoc.save()
       }
 
       debug('mdesign:interior:db')('Saving interior object to database...')
+
+      // Saving final record to database is additional 1.5% progress
+      interior.progress = interiorDoc.progress + 1.5
 
       // Save final interior object to database.
       const data = await InteriorRepository.updateRecord(interiorDoc.id, interior)
