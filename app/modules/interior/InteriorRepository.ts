@@ -1,4 +1,5 @@
 import { Storage } from '@google-cloud/storage'
+import debug from 'debug'
 import got from 'got'
 import path from 'node:path'
 import Util from 'node:util'
@@ -13,6 +14,8 @@ class InteriorRepository {
     // projectId: config.googleCloud.projectId,
     keyFilename: path.join(config.googleCloud.storage.serviceAccountKey),
   }).bucket(config.googleCloud.storage.bucketName)
+
+  static #gcpAiPlatformHostname = 'aiplatform.googleapis.com'
 
   static #gcpToken
 
@@ -155,14 +158,20 @@ class InteriorRepository {
 
     const predictionURL = config.predictionProvider.stableDiffusion.URL as string
 
-    if (!this.#gcpToken) {
-      this.#gcpToken = await Utils.getGCPToken()
-    }
-
     let headers
 
-    if (predictionURL.includes('aiplatform.googleapis.com') && !!this.#gcpToken) {
-      headers = { Authorization: `Bearer ${this.#gcpToken}` }
+    if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
+      if (!this.#gcpToken) {
+        this.#gcpToken = await Utils.getGCPToken()
+      }
+
+      if (!!this.#gcpToken) {
+        headers = { Authorization: `Bearer ${this.#gcpToken}` }
+      } else {
+        debug('mdesign:interior:ai:detr-resnet')("Can't get GCP token!!!")
+
+        throw new Error("Can't get GCP token!!!")
+      }
     }
 
     const diffusionRes = await got
@@ -202,14 +211,20 @@ class InteriorRepository {
   static async *createDETRResNetPredictions(renders: string[]) {
     const predictionURL = config.predictionProvider.detrResNet.URL as string
 
-    if (!this.#gcpToken) {
-      this.#gcpToken = await Utils.getGCPToken()
-    }
-
     let headers
 
-    if (predictionURL.includes('aiplatform.googleapis.com') && !!this.#gcpToken) {
-      headers = { Authorization: `Bearer ${this.#gcpToken}` }
+    if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
+      if (!this.#gcpToken) {
+        this.#gcpToken = await Utils.getGCPToken()
+      }
+
+      if (!!this.#gcpToken) {
+        headers = { Authorization: `Bearer ${this.#gcpToken}` }
+      } else {
+        debug('mdesign:interior:ai:detr-resnet')("Can't get GCP token!!!")
+
+        throw new Error("Can't get GCP token!!!")
+      }
     }
 
     let processedCount = 0
