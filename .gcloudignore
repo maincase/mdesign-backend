@@ -6,3 +6,6 @@
 
 !/package.json
 !/build
+!/.npmrc
+!/modern-design-ai-8a0b91b760d4.json
+!/modern-design-ai-9994297dd866.json
