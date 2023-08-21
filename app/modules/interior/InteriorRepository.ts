@@ -174,8 +174,6 @@ class InteriorRepository {
       }
     }
 
-    debug('mdesign:interior:ai:')(predictionURL, 'this is the url', this.#gcpToken)
-
     const diffusionRes = await got
       .post(predictionURL, {
         retry: {
