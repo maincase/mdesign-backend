@@ -168,11 +168,13 @@ class InteriorRepository {
       if (!!this.#gcpToken) {
         headers = { Authorization: `Bearer ${this.#gcpToken}` }
       } else {
-        debug('mdesign:interior:ai:detr-resnet')("Can't get GCP token!!!")
+        debug('mdesign:interior:ai:stable-diffusion')("Can't get GCP token!!!")
 
         throw new Error("Can't get GCP token!!!")
       }
     }
+
+    debug('mdesign:interior:ai:')(predictionURL, 'this is the url', this.#gcpToken)
 
     const diffusionRes = await got
       .post(predictionURL, {
