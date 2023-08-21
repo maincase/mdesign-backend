@@ -161,9 +161,14 @@ class InteriorRepository {
     let headers
 
     if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
-      if (!this.#gcpToken) {
-        this.#gcpToken = await Utils.getGCPToken()
-      }
+      /**
+       * NOTE: We should generate new token on each request as with current app engine scaling configuration in `app.yaml` file,
+       *        we only have one instance running, causing single token to be used by all requests. Time outing this token
+       *        causes VertexAI no longer to process requests.
+       */
+      // if (!this.#gcpToken) {
+      this.#gcpToken = await Utils.getGCPToken()
+      // }
 
       if (!!this.#gcpToken) {
         headers = { Authorization: `Bearer ${this.#gcpToken}` }
@@ -214,9 +219,14 @@ class InteriorRepository {
     let headers
 
     if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
-      if (!this.#gcpToken) {
-        this.#gcpToken = await Utils.getGCPToken()
-      }
+      /**
+       * NOTE: We should generate new token on each request as with current app engine scaling configuration in `app.yaml` file,
+       *        we only have one instance running, causing single token to be used by all requests. Time outing this token
+       *        causes VertexAI no longer to process requests.
+       */
+      // if (!this.#gcpToken) {
+      this.#gcpToken = await Utils.getGCPToken()
+      // }
 
       if (!!this.#gcpToken) {
         headers = { Authorization: `Bearer ${this.#gcpToken}` }
