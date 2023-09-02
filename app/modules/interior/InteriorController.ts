@@ -192,7 +192,7 @@ class InteriorController {
         res.catchError(err)
       } else {
         // NOTE: Handle error when res.ok got sent but rest of the function failed to execute
-        debug('mdesign:interior:controller')(`Error occurred while creating interior: ${err.message}`)
+        debug('mdesign:interior:controller')(`Error occurred while creating interior: ${err}`)
       }
     }
   }
