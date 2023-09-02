@@ -191,6 +191,8 @@ class InteriorController {
       if (!res.headersSent) {
         res.catchError(err)
       } else {
+        console.log(err, 'this is the error')
+
         // NOTE: Handle error when res.ok got sent but rest of the function failed to execute
         debug('mdesign:interior:controller')(`Error occurred while creating interior: ${err}`)
       }
