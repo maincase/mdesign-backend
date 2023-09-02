@@ -124,20 +124,12 @@ class InteriorController {
       interiorDoc.progress = 81.5
 
       for await (const pred of InteriorRepository.createDETRResNetPredictions(diffusionPredictions.renders)) {
-        debug('mdesign:ai:detr-resnet')(`Coming hereeee 1 ${interiorDoc.id}`)
-
         detrResNetPredictions.push(pred)
-
-        debug('mdesign:ai:detr-resnet')(`Coming hereeee 2 ${interiorDoc.id}`)
 
         // Each object prediction done on each of the new renders will be additional 3% progress
         interiorDoc.progress += 3
 
-        debug('mdesign:ai:detr-resnet')(`Coming hereeee 3 ${interiorDoc.id}`)
-
         await interiorDoc.save()
-
-        debug('mdesign:ai:detr-resnet')(`Coming hereeee 4 ${interiorDoc.id}`)
       }
 
       debug('mdesign:ai:detr-resnet')(`Received predictions from detr-resnet model: ${detrResNetPredictions}`)
@@ -191,10 +183,8 @@ class InteriorController {
       if (!res.headersSent) {
         res.catchError(err)
       } else {
-        console.log(err, 'this is the error')
-
         // NOTE: Handle error when res.ok got sent but rest of the function failed to execute
-        debug('mdesign:interior:controller')(`Error occurred while creating interior: ${err}`)
+        debug('mdesign:interior:controller')(`Error occurred while creating interior: ${err.message}`)
       }
     }
   }

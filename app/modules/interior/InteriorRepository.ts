@@ -216,8 +216,6 @@ class InteriorRepository {
   static async *createDETRResNetPredictions(renders: string[]) {
     const predictionURL = config.predictionProvider.detrResNet.URL as string
 
-    debug('mdesign:interior:ai:detr-resnet')('coming hereee -10')
-
     let headers
 
     if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
@@ -238,8 +236,6 @@ class InteriorRepository {
         throw new Error("Can't get GCP token!!!")
       }
     }
-
-    debug('mdesign:interior:ai:detr-resnet')('coming hereee -9')
 
     let processedCount = 0
 
