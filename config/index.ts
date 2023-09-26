@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import merge from 'lodash.merge'
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
@@ -7,4 +7,4 @@ const envConfig =
     ? (await import(`./${process.env.CONFIG}`)).default
     : (await import(`./${process.env.NODE_ENV}`)).default
 
-export default _.merge((await import('./default')).default, envConfig)
+export default merge((await import('./default')).default, envConfig)

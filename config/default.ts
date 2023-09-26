@@ -41,19 +41,28 @@ export default {
   },
   predictionProvider: {
     stableDiffusion: {
-      URL: 'http://localhost:7080/predictions/stable_diffusion-0.0.48',
+      URL: 'http://localhost:7080/predictions/stable_diffusion_xl-0.0.82',
+      // prompt:
+      //   'Transform the given space into a fully furnished photo-realistic %s %s with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
+      // prompt:
+      //   'realistic %s %s very detailed, hyper sharp focus, super resolution, stunning intricate detail, photorealistic, dramatic lighting, octane render, lot of furniture, ultra realistic, 8k',
+      // prompt:
+      //   'interior design, %s style, %s design, white style, %s, modular furniture with cotton textiles, wooden floor, low ceiling, large steel windows viewing a city, carpet on the floor, minimalism, minimal, clean, tiny style, accent bright color, air, eclectic trends, gray, simple and functional',
       prompt:
-        'Transform the given space into a fully furnished %s %s room with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
-      inference_steps: 60,
+        'photo-realistic ${room} with ${style} style, as much furniture and appliances as possible, with best quality and high detail, leave original walls',
+      negative_prompt:
+        'lowres, text, error, cropped, worst quality, low quality, jpeg artifacts, ugly, duplicate, out of frame, blurry, deformed, underexposed, overexposed, low contrast, watermark, signature, cut off',
+      inference_steps: 20,
       // inference_steps: 100,
-      inference_strength: 0.65,
-      inference_guidance_scale: 25,
+      inference_strength: 0.75,
+      inference_guidance_scale: 15,
       num_return_images: 3,
-      generator_seed: -11,
+      // generator_seed: 147903165,
+      generator_seed: 2147483647,
     },
     detrResNet: {
-      URL: 'http://localhost:7080/predictions/detr_resnet-0.0.48',
+      URL: 'http://localhost:7080/predictions/detr_resnet-0.0.82',
     },
   },
-  paginationLimit: 10,
+  paginationLimit: 20,
 }

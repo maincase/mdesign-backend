@@ -1,9 +1,8 @@
 import { Storage } from '@google-cloud/storage'
 import debug from 'debug'
 import got from 'got'
+import pick from 'lodash.pick'
 import path from 'node:path'
-import Util from 'node:util'
-import * as R from 'remeda'
 import config from '../../../config'
 import Utils from '../../utils/Utils'
 import { InteriorType } from './InteriorTypes'
@@ -31,7 +30,7 @@ class InteriorRepository {
       limit = config.paginationLimit
     }
 
-    const resultInteriors = await global.db.InteriorModel.find()
+    const resultInteriors = await global.db.InteriorModel.find({ progress: { $eq: 100 } })
       .skip(skip)
       .limit(limit)
       .sort({ updatedAt: -1 })
@@ -154,7 +153,9 @@ class InteriorRepository {
     style: string
   ): Promise<{ id: string; renders: [] }> {
     // Format prompt with input from user
-    const prompt = Util.format(config.predictionProvider.stableDiffusion.prompt, room, style)
+    const prompt = String(config.predictionProvider.stableDiffusion.prompt)
+      .replaceAll('${style}', style)
+      .replaceAll('${room}', room)
 
     const predictionURL = config.predictionProvider.stableDiffusion.URL as string
 
@@ -191,7 +192,8 @@ class InteriorRepository {
               id,
               image,
               prompt,
-              ...R.pick(config.predictionProvider.stableDiffusion, [
+              ...pick(config.predictionProvider.stableDiffusion, [
+                'negative_prompt',
                 'inference_steps',
                 'inference_strength',
                 'inference_guidance_scale',
