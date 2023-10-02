@@ -7,4 +7,6 @@ const envConfig =
     ? (await import(`./${process.env.CONFIG}`)).default
     : (await import(`./${process.env.NODE_ENV}`)).default
 
-export default merge((await import('./default')).default, envConfig)
+const m = merge((await import('./default')).default, envConfig)
+
+export default m

@@ -1,10 +1,8 @@
 import { Storage } from '@google-cloud/storage'
-import debug from 'debug'
-import got from 'got'
-import pick from 'lodash.pick'
 import path from 'node:path'
 import config from '../../../config'
-import Utils from '../../utils/Utils'
+import CustomPredictor from '../../predictors/CustomPredictor'
+import ReplicatePredictor from '../../predictors/ReplicatePredictor'
 import { InteriorType } from './InteriorTypes'
 
 class InteriorRepository {
@@ -13,10 +11,6 @@ class InteriorRepository {
     // projectId: config.googleCloud.projectId,
     keyFilename: path.join(config.googleCloud.storage.serviceAccountKey),
   }).bucket(config.googleCloud.storage.bucketName)
-
-  static #gcpAiPlatformHostname = 'aiplatform.googleapis.com'
-
-  static #gcpToken
 
   /**
    * Get interiors with pagination
@@ -149,66 +143,19 @@ class InteriorRepository {
   static async createDiffusionPredictions(
     id: string,
     image: string,
+    imageMimeType: string,
     room: string,
     style: string
-  ): Promise<{ id: string; renders: [] }> {
-    // Format prompt with input from user
-    const prompt = String(config.predictionProvider.stableDiffusion.prompt)
-      .replaceAll('${style}', style)
-      .replaceAll('${room}', room)
+  ): Promise<{ id: string; renders: string[] }> {
+    let res = { id, renders: [] as string[] }
 
-    const predictionURL = config.predictionProvider.stableDiffusion.URL as string
-
-    let headers
-
-    if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
-      /**
-       * NOTE: We should generate new token on each request as with current app engine scaling configuration in `app.yaml` file,
-       *        we only have one instance running, causing single token to be used by all requests. Time outing this token
-       *        causes VertexAI no longer to process requests.
-       */
-      // if (!this.#gcpToken) {
-      this.#gcpToken = await Utils.getGCPToken()
-      // }
-
-      if (!!this.#gcpToken) {
-        headers = { Authorization: `Bearer ${this.#gcpToken}` }
-      } else {
-        debug('mdesign:interior:ai:stable-diffusion')("Can't get GCP token!!!")
-
-        throw new Error("Can't get GCP token!!!")
-      }
+    if (!!config?.replicate?.stableDiffusion) {
+      res.renders.push(...(await ReplicatePredictor.createDiffusionPredictions({ image, imageMimeType, room, style })))
+    } else if (!!config?.predictionProvider?.stableDiffusion) {
+      res.renders.push(...(await CustomPredictor.createDiffusionPredictions({ id, image, room, style })))
     }
 
-    const diffusionRes = await got
-      .post(predictionURL, {
-        retry: {
-          limit: 0,
-        },
-        ...(!!headers ? { headers } : {}),
-        json: {
-          instances: [
-            {
-              id,
-              image,
-              prompt,
-              ...pick(config.predictionProvider.stableDiffusion, [
-                'negative_prompt',
-                'inference_steps',
-                'inference_strength',
-                'inference_guidance_scale',
-                'num_return_images',
-                'generator_seed',
-              ]),
-            },
-          ],
-        },
-      })
-      .json<{ predictions: { id: string; renders: [] }[] }>()
-
-    const diffusionPredictions = diffusionRes.predictions[0]
-
-    return diffusionPredictions
+    return res
   }
 
   /**
@@ -216,58 +163,13 @@ class InteriorRepository {
    * @param renders
    */
   static async *createDETRResNetPredictions(renders: string[]) {
-    const predictionURL = config.predictionProvider.detrResNet.URL as string
-
-    let headers
-
-    if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
-      /**
-       * NOTE: We should generate new token on each request as with current app engine scaling configuration in `app.yaml` file,
-       *        we only have one instance running, causing single token to be used by all requests. Time outing this token
-       *        causes VertexAI no longer to process requests.
-       */
-      // if (!this.#gcpToken) {
-      this.#gcpToken = await Utils.getGCPToken()
-      // }
-
-      if (!!this.#gcpToken) {
-        headers = { Authorization: `Bearer ${this.#gcpToken}` }
-      } else {
-        debug('mdesign:interior:ai:detr-resnet')("Can't get GCP token!!!")
-
-        throw new Error("Can't get GCP token!!!")
-      }
+    if (!!config?.replicate?.detrResNet) {
+      return yield* ReplicatePredictor.createDETRResNetPredictions(renders)
+    } else if (!!config?.predictionProvider?.detrResNet) {
+      return yield* CustomPredictor.createDETRResNetPredictions(renders)
     }
 
-    let processedCount = 0
-
-    while (processedCount < renders.length) {
-      let pred = renders[processedCount]
-
-      processedCount += 1
-
-      const detrRes = await got
-        .post(predictionURL, {
-          retry: {
-            limit: 0,
-          },
-          ...(!!headers ? { headers } : {}),
-          json: {
-            instances: [
-              {
-                image: pred,
-              },
-            ],
-          },
-        })
-        .json<{ predictions: [][] }>()
-
-      const detrPredictions = detrRes.predictions[0]
-
-      yield {
-        objects: detrPredictions,
-      }
-    }
+    return yield* []
   }
 }
 

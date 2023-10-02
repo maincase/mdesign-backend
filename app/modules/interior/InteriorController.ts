@@ -35,7 +35,8 @@ class InteriorController {
 
       const data = await InteriorRepository.getInteriors({ limit, skip })
 
-      debug('mdesign:interior:controller')(`Got interiors: ${JSON.stringify(data)}`)
+      // TODO: Clean up logs, this log for example puts to much output
+      // debug('mdesign:interior:controller')(`Got interiors: ${JSON.stringify(data)}`)
 
       res.ok(data)
     } catch (err) {
@@ -99,12 +100,16 @@ class InteriorController {
        * NOTE: Start image generation using stable diffusion model
        */
       debug('mdesign:ai:stable-diffusion')(
-        `Starting image generation using stable diffusion on ${imageBase64} with room: ${room} and style: ${style}`
+        `Starting image generation using stable diffusion on ${imageBase64.substring(
+          0,
+          50
+        )}... with room: ${room} and style: ${style}`
       )
 
       const diffusionPredictions = await InteriorRepository.createDiffusionPredictions(
         interiorDoc.id,
         imageBase64,
+        req.file.mimetype,
         room,
         style
       )

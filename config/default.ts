@@ -41,7 +41,7 @@ export default {
   },
   predictionProvider: {
     stableDiffusion: {
-      URL: 'http://localhost:7080/predictions/stable_diffusion_xl-0.0.82',
+      URL: 'http://localhost:3080/predictions/stable_diffusion_xl-0.1.9',
       // prompt:
       //   'Transform the given space into a fully furnished photo-realistic %s %s with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
       // prompt:
@@ -61,8 +61,36 @@ export default {
       generator_seed: 2147483647,
     },
     detrResNet: {
-      URL: 'http://localhost:7080/predictions/detr_resnet-0.0.82',
+      URL: 'http://localhost:3080/predictions/detr_resnet-0.1.9',
     },
+  },
+  replicate: {
+    REPLICATE_API_TOKEN: 'r8_KzSGMBHRwJv5jGGfkavVQPrN64evMwV0vw4gG',
+    stableDiffusion: {
+      URL: 'stability-ai/sdxl:af1a68a271597604546c09c64aabcd7782c114a63539a4a8d14d1eeda5630c33',
+      input: {
+        // prompt:
+        //   'Transform the given space into a fully furnished photo-realistic %s %s with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
+        // prompt:
+        //   'realistic %s %s very detailed, hyper sharp focus, super resolution, stunning intricate detail, photorealistic, dramatic lighting, octane render, lot of furniture, ultra realistic, 8k',
+        // prompt:
+        //   'interior design, %s style, %s design, white style, %s, modular furniture with cotton textiles, wooden floor, low ceiling, large steel windows viewing a city, carpet on the floor, minimalism, minimal, clean, tiny style, accent bright color, air, eclectic trends, gray, simple and functional',
+        prompt:
+          'photo-realistic ${room} with ${style} style, as much furniture and appliances as possible, with best quality and high detail, leave original walls',
+        negative_prompt:
+          'lowres, text, error, cropped, worst quality, low quality, jpeg artifacts, ugly, duplicate, out of frame, blurry, deformed, underexposed, overexposed, low contrast, watermark, signature, cut off',
+        num_inference_steps: 20,
+        // inference_steps: 100,
+        prompt_strength: 0.75,
+        guidance_scale: 15,
+        num_outputs: 3,
+        // generator_seed: 147903165,
+        seed: 2147483647,
+      },
+    },
+    // detrResNet: {
+    //   URL: 'replicate/resnet:dd782a3d531b61af491d1026434392e8afb40bfb53b8af35f727e80661489767',
+    // },
   },
   paginationLimit: 20,
 }
