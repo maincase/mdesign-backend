@@ -1,23 +1,31 @@
 import debug from 'debug'
 import got from 'got'
 import pick from 'lodash.pick'
+import { Document } from 'mongoose'
 import config from '../../config'
+import { InteriorType } from '../modules/interior/InteriorTypes'
 import Utils from '../utils/Utils'
 import Predictor from './Predictor'
 
 export default class CustomPredictor extends Predictor {
-  static #gcpAiPlatformHostname = 'aiplatform.googleapis.com'
+  #gcpAiPlatformHostname = 'aiplatform.googleapis.com'
 
-  static #gcpToken
+  #gcpToken
 
-  static async createDiffusionPredictions({
-    id,
+  /**
+   *
+   * @param param0
+   * @returns
+   */
+  async createDiffusionPredictions({
+    interiorDoc,
     image,
     style,
     room,
   }: {
-    id: string
+    interiorDoc: InteriorType & Document
     image: string
+    imageMimeType?: string
     style: string
     room: string
   }) {
@@ -30,18 +38,18 @@ export default class CustomPredictor extends Predictor {
 
     let headers
 
-    if (predictionURL.includes(CustomPredictor.#gcpAiPlatformHostname)) {
+    if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
       /**
        * NOTE: We should generate new token on each request as with current app engine scaling configuration in `app.yaml` file,
        *        we only have one instance running, causing single token to be used by all requests. Time outing this token
        *        causes VertexAI no longer to process requests.
        */
       // if (!this.#gcpToken) {
-      CustomPredictor.#gcpToken = await Utils.getGCPToken()
+      this.#gcpToken = await Utils.getGCPToken()
       // }
 
-      if (!!CustomPredictor.#gcpToken) {
-        headers = { Authorization: `Bearer ${CustomPredictor.#gcpToken}` }
+      if (!!this.#gcpToken) {
+        headers = { Authorization: `Bearer ${this.#gcpToken}` }
       } else {
         debug('mdesign:interior:ai:stable-diffusion')("Can't get GCP token!!!")
 
@@ -58,7 +66,7 @@ export default class CustomPredictor extends Predictor {
         json: {
           instances: [
             {
-              id,
+              id: interiorDoc.id,
               image,
               prompt,
               ...pick(config.predictionProvider.stableDiffusion, [
@@ -80,7 +88,11 @@ export default class CustomPredictor extends Predictor {
     return diffusionPredictions.renders
   }
 
-  static async *createDETRResNetPredictions(renders: string[]) {
+  /**
+   *
+   * @param renders
+   */
+  async *createDETRResNetPredictions(renders) {
     const predictionURL = config.predictionProvider.detrResNet.URL as string
 
     let headers

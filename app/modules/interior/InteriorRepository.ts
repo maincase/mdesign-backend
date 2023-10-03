@@ -88,7 +88,10 @@ class InteriorRepository {
    * @param inter
    * @returns
    */
-  static async updateRecord(id: string, inter: InteriorType) {
+  static async updateRecord(
+    interiorDoc: Awaited<ReturnType<typeof InteriorRepository.createRecord>>,
+    inter: InteriorType
+  ) {
     const interior = { ...inter }
 
     if (!interior?.renders || !Array.isArray(interior.renders)) {
@@ -100,8 +103,6 @@ class InteriorRepository {
     if (renders) {
       delete (interior as Partial<InteriorType>).renders
     }
-
-    const interiorDoc = await global.db.InteriorModel.findById(id)
 
     if (!interiorDoc) {
       throw new Error('Interior not found')
@@ -134,6 +135,22 @@ class InteriorRepository {
   }
 
   /**
+   * Setup predictor based on predictor key
+   *
+   * @param predKey
+   * @returns
+   */
+  static #setupPredictor(predKey: string) {
+    if (!!config?.replicate?.[predKey]) {
+      return new ReplicatePredictor()
+    } else if (!!config?.predictionProvider?.[predKey]) {
+      return new CustomPredictor()
+    }
+
+    return
+  }
+
+  /**
    *
    * @param image
    * @param room
@@ -141,21 +158,23 @@ class InteriorRepository {
    * @returns
    */
   static async createDiffusionPredictions(
-    id: string,
+    interiorDoc: Awaited<ReturnType<typeof InteriorRepository.createRecord>>,
     image: string,
     imageMimeType: string,
     room: string,
     style: string
   ): Promise<{ id: string; renders: string[] }> {
-    let res = { id, renders: [] as string[] }
+    const predictor = this.#setupPredictor('stableDiffusion')
 
-    if (!!config?.replicate?.stableDiffusion) {
-      res.renders.push(...(await ReplicatePredictor.createDiffusionPredictions({ image, imageMimeType, room, style })))
-    } else if (!!config?.predictionProvider?.stableDiffusion) {
-      res.renders.push(...(await CustomPredictor.createDiffusionPredictions({ id, image, room, style })))
+    return {
+      id: interiorDoc.id,
+      renders:
+        (await predictor?.createDiffusionPredictions(
+          predictor instanceof ReplicatePredictor
+            ? { interiorDoc, image, imageMimeType, room, style }
+            : { interiorDoc, image, room, style }
+        )) ?? [],
     }
-
-    return res
   }
 
   /**
@@ -163,13 +182,9 @@ class InteriorRepository {
    * @param renders
    */
   static async *createDETRResNetPredictions(renders: string[]) {
-    if (!!config?.replicate?.detrResNet) {
-      return yield* ReplicatePredictor.createDETRResNetPredictions(renders)
-    } else if (!!config?.predictionProvider?.detrResNet) {
-      return yield* CustomPredictor.createDETRResNetPredictions(renders)
-    }
+    const predictor = this.#setupPredictor('detrResNet')
 
-    return yield* []
+    return yield* predictor?.createDETRResNetPredictions(renders) ?? []
   }
 }
 

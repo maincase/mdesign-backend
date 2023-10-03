@@ -1,6 +1,7 @@
 import { model, Schema } from 'mongoose'
+import { InteriorType } from './InteriorTypes'
 
-const InteriorSchema = new Schema(
+const InteriorSchema = new Schema<InteriorType>(
   {
     room: { type: String, required: true },
     style: { type: String, required: true },

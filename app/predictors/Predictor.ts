@@ -1,15 +1,14 @@
-export default class Predictor {
-  static async createDiffusionPredictions(_: {
-    id?: string
+import { Document } from 'mongoose'
+import { InteriorType } from '../modules/interior/InteriorTypes'
+
+export default abstract class Predictor {
+  abstract createDiffusionPredictions(_: {
+    interiorDoc: InteriorType & Document
     image: string
     imageMimeType?: string
     style: string
     room: string
-  }): Promise<string[]> {
-    throw new Error('Not implemented')
-  }
+  }): Promise<string[]>
 
-  static async *createDETRResNetPredictions(_: string[]): AsyncGenerator<unknown, void, unknown> {
-    throw new Error('Not implemented')
-  }
+  abstract createDETRResNetPredictions(_: string[]): AsyncGenerator<{}, void, unknown>
 }

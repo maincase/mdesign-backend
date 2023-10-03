@@ -107,7 +107,7 @@ class InteriorController {
       )
 
       const diffusionPredictions = await InteriorRepository.createDiffusionPredictions(
-        interiorDoc.id,
+        interiorDoc,
         imageBase64,
         req.file.mimetype,
         room,
@@ -154,7 +154,7 @@ class InteriorController {
       await interiorDoc.save()
 
       // Create interior object which will be sent to repository
-      const interior: InteriorType & { progress?: number } = {
+      const interior: InteriorType = {
         room,
         style,
         image: imageName,
@@ -180,7 +180,7 @@ class InteriorController {
       interior.progress = interiorDoc.progress + 1.5
 
       // Save final interior object to database.
-      const data = await InteriorRepository.updateRecord(interiorDoc.id, interior)
+      const data = await InteriorRepository.updateRecord(interiorDoc, interior)
 
       debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${JSON.stringify(data)}`)
     } catch (err: any) {
