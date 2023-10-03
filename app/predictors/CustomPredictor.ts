@@ -121,6 +121,8 @@ export default class CustomPredictor extends Predictor {
     while (processedCount < renders.length) {
       let pred = renders[processedCount]
 
+      console.log(predictionURL, 'this is the prediction URL')
+
       debug('mdesign:interior:ai:detr-resnet')(pred, predictionURL, headers)
 
       processedCount += 1
