@@ -121,6 +121,8 @@ export default class CustomPredictor extends Predictor {
     while (processedCount < renders.length) {
       let pred = renders[processedCount]
 
+      debug('mdesign:interior:ai:detr-resnet')(pred)
+
       processedCount += 1
 
       const detrRes = await got
