@@ -10,7 +10,7 @@ export default async (connection, name = '') => {
   // mongoose.set('useFindAndModify', false)
 
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'development_local') {
-    mongoose.set('debug', true)
+    mongoose.set('debug', !!process.env?.LOG_MONGOOSE)
   }
 
   /**

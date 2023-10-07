@@ -1,6 +1,7 @@
 import debug from 'debug'
 import { Request, Response } from 'express'
 import { createHash } from 'node:crypto'
+import sharp from 'sharp'
 import { ResponseOptions } from '../../utils/responses'
 import InteriorRepository from './InteriorRepository'
 import type { InteriorType, Render } from './InteriorTypes'
@@ -77,7 +78,7 @@ class InteriorController {
   static async createInterior(req: Request, res: Response & ResponseOptions) {
     try {
       if (!req.file) {
-        throw new Error('Please provide an original image')
+        throw new Error('Please provide an image')
       }
 
       const { room, style } = req.body
@@ -86,7 +87,17 @@ class InteriorController {
         throw new Error('Please provide room type and style')
       }
 
-      const imageBase64 = Buffer.from(req.file.buffer).toString('base64')
+      const imgSharp = sharp(req.file.buffer)
+
+      const imgMeta = await imgSharp.metadata()
+
+      if (!imgMeta.width || !imgMeta.height || imgMeta.width > 1024 || imgMeta.height > 1024) {
+        throw new Error(
+          'Image is not of correct dimensions, please provide image with width <= 1024 and height <= 1024'
+        )
+      }
+
+      const imageBase64 = (await imgSharp.toBuffer()).toString('base64')
 
       const imageName = calculateImgSha(`${imageBase64}+${room}+${style}`)
 
