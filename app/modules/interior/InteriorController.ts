@@ -62,7 +62,7 @@ class InteriorController {
 
       const data = await InteriorRepository.getInteriorById(id)
 
-      debug('mdesign:interior:controller')(`Got interior: ${JSON.stringify(data)}`)
+      debug('mdesign:interior:controller')(`Got interior: ${id}`)
 
       res.ok(data)
     } catch (err) {
@@ -193,7 +193,7 @@ class InteriorController {
       // Save final interior object to database.
       const data = await InteriorRepository.updateRecord(interiorDoc, interior)
 
-      debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${JSON.stringify(data)}`)
+      debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${data?._id}`)
     } catch (err: any) {
       // NOTE: If response is already sent, we can't send another response
       if (!res.headersSent) {

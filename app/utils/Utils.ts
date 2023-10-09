@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt-nodejs'
+import bcrypt from 'bcrypt'
 import { GoogleAuth } from 'google-auth-library'
 import config from '../../config'
 
@@ -34,7 +34,7 @@ export default class Utils {
   }
 
   static generateHash(password: string): string {
-    return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null)
+    return bcrypt.hashSync(password, bcrypt.genSaltSync(8))
   }
 
   static validateEmail(v: string): boolean {
