@@ -72,17 +72,18 @@ export default {
         // prompt:
         //   'Transform the given space into a fully furnished photo-realistic %s %s with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
         // prompt:
-        //   'realistic %s %s very detailed, hyper sharp focus, super resolution, stunning intricate detail, photorealistic, dramatic lighting, octane render, lot of furniture, ultra realistic, 8k',
+        //   'photo-realistic %s %s very detailed, hyper sharp focus, super resolution, stunning intricate detail, photorealistic, dramatic lighting, octane render, furniture, electronics, ultra realistic, 4k, 8k',
         // prompt:
         //   'interior design, %s style, %s design, white style, %s, modular furniture with cotton textiles, wooden floor, low ceiling, large steel windows viewing a city, carpet on the floor, minimalism, minimal, clean, tiny style, accent bright color, air, eclectic trends, gray, simple and functional',
         prompt:
-          'photo-realistic ${room} with ${style} style, as much furniture and appliances as possible, with best quality and high detail, leave original walls',
+          'photo-realistic interior design for ${room} with ${style} style with same lightning as in initial image, very detailed, hyper sharp focus, super resolution, leave original walls, stunning intricate detail, photorealistic, octane render, furniture, electronics, ultra realistic, 4k, 8k',
+          // 'photo-realistic ${room} with ${style} style, as much furniture and appliances as possible, with best quality and high detail, leave original walls',
         negative_prompt:
-          'lowres, text, error, cropped, worst quality, low quality, jpeg artifacts, ugly, duplicate, out of frame, blurry, deformed, underexposed, overexposed, low contrast, watermark, signature, cut off',
-        num_inference_steps: 20,
+          'lowres, text, error, cropped, worst quality, low quality, jpeg artifacts, ugly, duplicate, out of frame, blurry, deformed, underexposed, overexposed, low contrast, watermark, signature, cut off, not finished, blur, overloaded',
+        num_inference_steps: 50,
         // inference_steps: 100,
-        prompt_strength: 0.75,
-        guidance_scale: 15,
+        prompt_strength: 0.74,
+        guidance_scale: 13,
         num_outputs: 3,
         // generator_seed: 147903165,
         seed: 2147483647,
