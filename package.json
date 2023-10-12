@@ -1,6 +1,6 @@
 {
   "name": "modern-design-backend",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@8.9.0-0+sha256.7d8b51132623911db3d52dc6e80a449cc9df8eb80de15d3eba7a99189b494da2",
