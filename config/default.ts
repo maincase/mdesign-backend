@@ -67,7 +67,7 @@ export default {
   replicate: {
     REPLICATE_API_TOKEN: 'r8_KzSGMBHRwJv5jGGfkavVQPrN64evMwV0vw4gG',
     stableDiffusion: {
-      URL: 'maincase/sdxl:04de2f777e109c65f99522194ab4e752804895c9cbb6ec5f9c6f40ea73d0aff7',
+      URL: 'maincase/sdxl:8e60abe25fe6ec6125d45f133eb7a251c22cec9f79d8a3c344a6ed43259208ec',
       input: {
         // prompt:
         //   'Transform the given space into a fully furnished photo-realistic %s %s with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
