@@ -5,7 +5,7 @@ import config from '../../config'
 import { InteriorType } from '../modules/interior/InteriorTypes'
 import Predictor from './Predictor'
 
-export default class CustomPredictor extends Predictor {
+export default class CustomPredictor implements Predictor {
   // #gcpAiPlatformHostname = 'aiplatform.googleapis.com'
 
   // #gcpToken

@@ -6,7 +6,7 @@ import config from '../../config'
 import { InteriorType } from '../modules/interior/InteriorTypes'
 import Predictor from './Predictor'
 
-export default class ReplicatePredictor extends Predictor {
+export default class ReplicatePredictor implements Predictor {
   #replicate = new Replicate({
     auth: config.replicate.REPLICATE_API_TOKEN,
   })

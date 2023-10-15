@@ -1,8 +1,8 @@
 import { Document } from 'mongoose'
 import { InteriorType } from '../modules/interior/InteriorTypes'
 
-export default abstract class Predictor {
-  abstract createDiffusionPredictions(_: {
+export default interface Predictor {
+  createDiffusionPredictions(_: {
     interiorDoc: InteriorType & Document
     image: string
     imageMimeType?: string
@@ -10,5 +10,5 @@ export default abstract class Predictor {
     room: string
   }): Promise<string[]>
 
-  abstract createDETRResNetPredictions(_: string[]): AsyncGenerator<{}, void, unknown>
+  createDETRResNetPredictions(_: string[]): AsyncGenerator<{}, void, unknown>
 }
