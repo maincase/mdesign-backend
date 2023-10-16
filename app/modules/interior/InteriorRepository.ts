@@ -211,7 +211,7 @@ class InteriorRepository {
     for (const [ind, pred] of renders.entries()) {
       const renderImageName = calculateImgSha(pred)
 
-      await InteriorRepository.saveImageToGCP(renderImageName, pred)
+      await this.saveImageToGCP(renderImageName, pred)
 
       detrResNetPredictions[ind] = {
         image: renderImageName,
@@ -222,9 +222,7 @@ class InteriorRepository {
       await interiorDoc.save()
     }
 
-    for await (const [ind, pred] of InteriorRepository.createDETRResNetPredictions(
-      detrResNetPredictions.map((r) => r.image)
-    )) {
+    for await (const [ind, pred] of this.createDETRResNetPredictions(detrResNetPredictions.map((r) => r.image))) {
       detrResNetPredictions[ind].objects = pred.objects
 
       // Each object prediction done on each of the new renders will be additional 3% progress
@@ -255,7 +253,7 @@ class InteriorRepository {
     // Save final interior object to database.
     const data = await this.updateRecord(this.activeRenderDocs[interiorDoc.id], interior)
 
-    debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${data?._id}`)
+    debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${data?.id}`)
 
     // After prediction is done, remove interior doc from active renders
     delete this.activeRenderDocs[interiorDoc.id]

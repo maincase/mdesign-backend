@@ -10,6 +10,9 @@ import InteriorRepository, { calculateImgSha } from './InteriorRepository'
  *
  */
 class InteriorController {
+  static #callbackTimer: NodeJS.Timeout | undefined = undefined
+  static #callbackQueue: (() => void)[] = []
+
   /**
    *
    * @param req
@@ -102,6 +105,9 @@ class InteriorController {
       // Create initial record for interior in database
       const interiorDoc = await InteriorRepository.createRecord(imageName, room, style)
 
+      // As soon as we register record in database we return the id to user
+      res.ok(interiorDoc)
+
       // Upload original image to google storage
       debug('mdesign:cloud-storage')('Uploading original interior image to google storage')
 
@@ -123,9 +129,6 @@ class InteriorController {
           50
         )}... with room: ${room} and style: ${style}`
       )
-
-      // As soon as we register record in database we return the id to user
-      res.ok(interiorDoc)
     } catch (err: any) {
       // If response is already sent, we can't send another response
       if (!res.headersSent) {
@@ -137,7 +140,34 @@ class InteriorController {
     }
   }
 
-  static async createInteriorCallback(req: Request, res: Response & ResponseOptions) {
+  /**
+   *
+   * @returns
+   */
+  static #startCallbackProcessing() {
+    const callback = this.#callbackQueue.shift()
+
+    if (!!callback) {
+      this.#callbackTimer = setTimeout(() => {
+        callback()
+
+        clearTimeout(this.#callbackTimer)
+
+        if (this.#callbackQueue.length > 0) {
+          this.#startCallbackProcessing()
+        } else {
+          this.#callbackTimer = undefined
+        }
+      }, 300)
+    }
+  }
+
+  /**
+   *
+   * @param req
+   * @param res
+   */
+  static createInteriorCallback = async (req: Request, res: Response & ResponseOptions) => {
     try {
       if (req.body.status === 'succeeded') {
         const output = req.body.output
@@ -147,21 +177,22 @@ class InteriorController {
           predictions.push(render.body.toString('base64'))
         }
 
-        // Run after timeout, so progress callbacks not cause parallel mongo document manipulation
-        setTimeout(
-          () =>
-            InteriorRepository.processDiffusionPredictions({
-              id: req.query.id as string,
-              renders: predictions,
-            }),
-          500
+        this.#callbackQueue.push(() =>
+          InteriorRepository.processDiffusionPredictions({
+            id: req.query.id as string,
+            renders: predictions,
+          })
         )
       } else {
         const predictor = new ReplicatePredictor()
 
         const interiorDoc = InteriorRepository.activeRenderDocs[req.query.id as string]
 
-        predictor.diffusionProgressCallback(interiorDoc)(req.body)
+        this.#callbackQueue.push(() => predictor.diffusionProgressCallback(interiorDoc)(req.body))
+      }
+
+      if (!this.#callbackTimer) {
+        this.#startCallbackProcessing()
       }
     } catch (err: any) {
       debug('mdesign:interior:controller')(`Error occurred while processing create interior callback: ${err.message}`)
