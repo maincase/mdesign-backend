@@ -1,10 +1,15 @@
 import { Storage } from '@google-cloud/storage'
-import { Document } from 'mongoose'
+import debug from 'debug'
+import pick from 'lodash.pick'
+import { Document, FlattenMaps } from 'mongoose'
+import { createHash } from 'node:crypto'
 import path from 'node:path'
 import config from '../../../config'
 import CustomPredictor from '../../predictors/CustomPredictor'
 import ReplicatePredictor from '../../predictors/ReplicatePredictor'
-import { InteriorType } from './InteriorTypes'
+import { InteriorType, Render } from './InteriorTypes'
+
+export const calculateImgSha = (image) => `${createHash('sha256').update(image).digest('hex')}.jpeg`
 
 class InteriorRepository {
   // GCP Bucket for uploading interior images
@@ -14,7 +19,7 @@ class InteriorRepository {
   }).bucket(config.googleCloud.storage.bucketName)
 
   // Current active interior renders
-  static activeRenderDocs: Record<string, InteriorType & Document> = {}
+  static activeRenderDocs: Record<string, Awaited<ReturnType<typeof InteriorRepository.createRecord>>> = {}
 
   /**
    * Get interiors with pagination
@@ -96,7 +101,7 @@ class InteriorRepository {
   static async updateRecord(
     interiorDoc: Awaited<ReturnType<typeof InteriorRepository.createRecord>>,
     inter: InteriorType
-  ) {
+  ): Promise<FlattenMaps<InteriorType & Document<InteriorType>>> {
     const interior = { ...inter }
 
     if (!interior?.renders || !Array.isArray(interior.renders)) {
@@ -134,7 +139,7 @@ class InteriorRepository {
         select: '-interior -__v -createdAt',
         transform: (render) => render.toJSON(),
       })
-    ).toJSON()
+    ).toJSON<InteriorType & Document<InteriorType>>()
 
     return resultInterior
   }
@@ -162,31 +167,98 @@ class InteriorRepository {
    * @param style
    * @returns
    */
-  static async createDiffusionPredictions(
+  static createDiffusionPredictions(
     interiorDoc: Awaited<ReturnType<typeof InteriorRepository.createRecord>>,
     image: string,
     imageMimeType: string,
     room: string,
     style: string
-  ): Promise<{ id: string; renders: string[] }> {
+  ) {
+    // Add document to active renders
+    this.activeRenderDocs[interiorDoc.id] = interiorDoc
+
+    // Setup the predictor
     const predictor = this.#setupPredictor('stableDiffusion')
 
-    // Add document to active renders
-    InteriorRepository.activeRenderDocs[interiorDoc.id] = interiorDoc
-
-    const renders = await predictor.createDiffusionPredictions(
+    predictor.createDiffusionPredictions(
       predictor instanceof ReplicatePredictor
         ? { interiorDoc, image, imageMimeType, room, style }
         : { interiorDoc, image, room, style }
     )
+  }
+
+  /**
+   *
+   * @param interiorDoc
+   * @param diffusionPredictions
+   */
+  static async processDiffusionPredictions({ id, renders }: { id: string; renders: string[] }) {
+    const interiorDoc = this.activeRenderDocs[id]
+
+    debug('mdesign:ai:stable-diffusion')(`Received predictions from stable diffusion model: ${renders.length}`)
+
+    // Finished with rendering new interiors, and we have total of 81.5% progress including initial db record progress
+    interiorDoc.progress = 83.5
+
+    /**
+     * Start object detection using detr-resnet model on newly created renders
+     */
+    debug('mdesign:ai:detr-resnet')('Starting object detection using det-resnet model')
+
+    const detrResNetPredictions: Render[] = []
+
+    // Upload newly created renders to google storage
+    for (const [ind, pred] of renders.entries()) {
+      const renderImageName = calculateImgSha(pred)
+
+      await InteriorRepository.saveImageToGCP(renderImageName, pred)
+
+      detrResNetPredictions[ind] = {
+        image: renderImageName,
+      } as Render
+
+      interiorDoc.progress += 2
+
+      await interiorDoc.save()
+    }
+
+    for await (const [ind, pred] of InteriorRepository.createDETRResNetPredictions(
+      detrResNetPredictions.map((r) => r.image)
+    )) {
+      detrResNetPredictions[ind].objects = pred.objects
+
+      // Each object prediction done on each of the new renders will be additional 3% progress
+      interiorDoc.progress += 3
+
+      await interiorDoc.save()
+    }
+
+    debug('mdesign:ai:detr-resnet')(
+      `Received predictions from detr-resnet model: ${detrResNetPredictions.length} objects`
+    )
+
+    /**
+     * Connect and upload files to GCP Storage
+     */
+
+    // Create interior object which will be sent to repository
+    const interior: InteriorType = {
+      ...pick(interiorDoc, ['room', 'style', 'image']),
+      renders: detrResNetPredictions as Render[],
+    }
+
+    // Saving final record to database is additional 1.5% progress
+    interior.progress = interiorDoc.progress + 1.5
+
+    debug('mdesign:interior:db')('Saving interior object to database...')
+
+    // Save final interior object to database.
+    const data = await this.updateRecord(this.activeRenderDocs[interiorDoc.id], interior)
+
+    debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${data?._id}`)
 
     // After prediction is done, remove interior doc from active renders
-    delete InteriorRepository.activeRenderDocs[interiorDoc.id]
-
-    return {
-      id: interiorDoc.id,
-      renders,
-    }
+    delete this.activeRenderDocs[interiorDoc.id]
   }
 
   /**
@@ -194,6 +266,7 @@ class InteriorRepository {
    * @param renders
    */
   static async *createDETRResNetPredictions(renders: string[]) {
+    // Setup the predictor
     const predictor = this.#setupPredictor('detrResNet')
 
     return yield* predictor.createDETRResNetPredictions(renders)

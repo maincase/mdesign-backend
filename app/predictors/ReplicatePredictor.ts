@@ -1,4 +1,3 @@
-import got from 'got'
 import pick from 'lodash.pick'
 import { Document } from 'mongoose'
 import Replicate, { Prediction } from 'replicate'
@@ -14,7 +13,7 @@ export default class ReplicatePredictor implements Predictor {
   // Should we enable refiner pipe for diffusion predictions
   static #enableRefiner: boolean = true
 
-  #initialProgress: number = 1.5
+  #initialProgress: number = 3.5
 
   #progress?: number
 
@@ -97,7 +96,7 @@ export default class ReplicatePredictor implements Predictor {
         }
       }
 
-      if (interiorDoc?.progress !== this.#progress) {
+      if (!!this.#progress && !!interiorDoc?.progress && interiorDoc?.progress !== this.#progress) {
         interiorDoc.progress = this.#progress
         interiorDoc.save()
       }
@@ -132,7 +131,7 @@ export default class ReplicatePredictor implements Predictor {
     const predictionOwner = predictionURL[0]
     const predictionName = predictionURL[1]
 
-    const prediction = await this.#replicate.deployments.predictions.create(
+    this.#replicate.deployments.predictions.create(
       predictionOwner,
       predictionName,
       {
@@ -158,19 +157,10 @@ export default class ReplicatePredictor implements Predictor {
             : {}),
         },
         webhook: `${config.replicate.stableDiffusion.webhook}?id=${interiorDoc.id}`,
-        webhook_events_filter: ['output', 'logs'],
+        webhook_events_filter: ['output', 'logs', 'completed'],
       }
       // this.#diffusionProgressCallback(interiorDoc)
     )
-
-    const output = (await this.#replicate.wait(prediction, {})).output
-
-    let predictions: string[] = []
-    for (const render of await Promise.all(output.map((renderUrl) => got(renderUrl, { responseType: 'buffer' })))) {
-      predictions.push(render.body.toString('base64'))
-    }
-
-    return predictions
   }
 
   /**

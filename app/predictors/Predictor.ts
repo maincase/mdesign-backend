@@ -8,7 +8,7 @@ export default interface Predictor {
     imageMimeType?: string
     style: string
     room: string
-  }): Promise<string[]>
+  }): Promise<string[] | void>
 
   createDETRResNetPredictions(_: string[]): AsyncGenerator<[number, item: { objects: [] }], void, unknown>
 }

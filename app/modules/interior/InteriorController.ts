@@ -1,13 +1,10 @@
 import debug from 'debug'
 import { Request, Response } from 'express'
-import { createHash } from 'node:crypto'
+import got from 'got'
 import sharp from 'sharp'
 import ReplicatePredictor from '../../predictors/ReplicatePredictor'
 import { ResponseOptions } from '../../utils/responses'
-import InteriorRepository from './InteriorRepository'
-import type { InteriorType, Render } from './InteriorTypes'
-
-const calculateImgSha = (image) => `${createHash('sha256').update(image).digest('hex')}.jpeg`
+import InteriorRepository, { calculateImgSha } from './InteriorRepository'
 
 /**
  *
@@ -105,115 +102,70 @@ class InteriorController {
       // Create initial record for interior in database
       const interiorDoc = await InteriorRepository.createRecord(imageName, room, style)
 
-      // As soon as we register record in database we return the id to user
-      res.ok(interiorDoc)
+      // Upload original image to google storage
+      debug('mdesign:cloud-storage')('Uploading original interior image to google storage')
+
+      await InteriorRepository.saveImageToGCP(imageName, imageBase64)
+
+      // Saving each image to google storage will be additional 2% progress
+      interiorDoc.progress! += 2
+
+      await interiorDoc.save()
 
       /**
-       * NOTE: Start image generation using stable diffusion model
+       * Start image generation using stable diffusion model
        */
+      InteriorRepository.createDiffusionPredictions(interiorDoc, imageBase64, req.file.mimetype, room, style)
+
       debug('mdesign:ai:stable-diffusion')(
-        `Starting image generation using stable diffusion on ${imageBase64.substring(
+        `Started image generation using stable diffusion on ${imageBase64.substring(
           0,
           50
         )}... with room: ${room} and style: ${style}`
       )
 
-      const diffusionPredictions = await InteriorRepository.createDiffusionPredictions(
-        interiorDoc,
-        imageBase64,
-        req.file.mimetype,
-        room,
-        style
-      )
-
-      debug('mdesign:ai:stable-diffusion')(
-        `Received predictions from stable diffusion model: ${diffusionPredictions.renders.length}`
-      )
-
-      // NOTE: Finished with rendering new interiors, and we have total of 81.5% progress including initial db record progress
-      interiorDoc.progress = 81.5
-
-      /**
-       * NOTE: Start object detection using detr-resnet model on newly created renders
-       */
-      debug('mdesign:ai:detr-resnet')('Starting object detection using det-resnet model')
-
-      const detrResNetPredictions: Render[] = []
-
-      // Upload newly created renders to google storage
-      for (const [ind, pred] of diffusionPredictions.renders.entries()) {
-        const renderImageName = calculateImgSha(pred)
-
-        await InteriorRepository.saveImageToGCP(renderImageName, pred)
-
-        detrResNetPredictions[ind] = {
-          image: renderImageName,
-        } as Render
-
-        interiorDoc.progress += 2
-
-        await interiorDoc.save()
-      }
-
-      for await (const [ind, pred] of InteriorRepository.createDETRResNetPredictions(
-        detrResNetPredictions.map((r) => r.image)
-      )) {
-        detrResNetPredictions[ind].objects = pred.objects
-
-        // Each object prediction done on each of the new renders will be additional 3% progress
-        interiorDoc.progress += 3
-
-        await interiorDoc.save()
-      }
-
-      debug('mdesign:ai:detr-resnet')(`Received predictions from detr-resnet model: ${detrResNetPredictions}`)
-
-      /**
-       * NOTE: Connect and upload files to GCP Storage
-       */
-
-      // Upload original image to google storage
-      debug('mdesign:cloud-storage')('Uploading original interior image and newly created renders to google storage')
-
-      await InteriorRepository.saveImageToGCP(imageName, imageBase64)
-
-      // NOTE: Saving each image to google storage will be additional 2% progress
-      interiorDoc.progress += 2
-
-      await interiorDoc.save()
-
-      // Create interior object which will be sent to repository
-      const interior: InteriorType = {
-        room,
-        style,
-        image: imageName,
-        renders: detrResNetPredictions as Render[],
-      }
-
-      debug('mdesign:interior:db')('Saving interior object to database...')
-
-      // Saving final record to database is additional 1.5% progress
-      interior.progress = interiorDoc.progress + 1.5
-
-      // Save final interior object to database.
-      const data = await InteriorRepository.updateRecord(interiorDoc, interior)
-
-      debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${data?._id}`)
+      // As soon as we register record in database we return the id to user
+      res.ok(interiorDoc)
     } catch (err: any) {
-      // NOTE: If response is already sent, we can't send another response
+      // If response is already sent, we can't send another response
       if (!res.headersSent) {
         res.catchError(err)
       } else {
-        // NOTE: Handle error when res.ok got sent but rest of the function failed to execute
+        // Handle error when res.ok got sent but rest of the function failed to execute
         debug('mdesign:interior:controller')(`Error occurred while creating interior: ${err.message}`)
       }
     }
   }
 
-  static createInteriorCallback(req: Request, res: Response & ResponseOptions) {
-    const predictor = new ReplicatePredictor()
+  static async createInteriorCallback(req: Request, res: Response & ResponseOptions) {
+    try {
+      if (req.body.status === 'succeeded') {
+        const output = req.body.output
 
-    predictor.diffusionProgressCallback(InteriorRepository.activeRenderDocs[req.query.id as string])(req.body)
+        let predictions: string[] = []
+        for (const render of await Promise.all(output.map((renderUrl) => got(renderUrl, { responseType: 'buffer' })))) {
+          predictions.push(render.body.toString('base64'))
+        }
+
+        // Run after timeout, so progress callbacks not cause parallel mongo document manipulation
+        setTimeout(
+          () =>
+            InteriorRepository.processDiffusionPredictions({
+              id: req.query.id as string,
+              renders: predictions,
+            }),
+          500
+        )
+      } else {
+        const predictor = new ReplicatePredictor()
+
+        const interiorDoc = InteriorRepository.activeRenderDocs[req.query.id as string]
+
+        predictor.diffusionProgressCallback(interiorDoc)(req.body)
+      }
+    } catch (err: any) {
+      debug('mdesign:interior:controller')(`Error occurred while processing create interior callback: ${err.message}`)
+    }
 
     res.ok('Ok')
   }
