@@ -210,7 +210,7 @@ class InteriorController {
     }
   }
 
-  static async createInteriorCallback(req: Request, res: Response & ResponseOptions) {
+  static createInteriorCallback(req: Request, res: Response & ResponseOptions) {
     const predictor = new ReplicatePredictor()
 
     predictor.diffusionProgressCallback(InteriorRepository.activeRenderDocs[req.query.id as string])(req.body)

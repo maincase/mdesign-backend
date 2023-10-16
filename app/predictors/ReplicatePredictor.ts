@@ -55,7 +55,7 @@ export default class ReplicatePredictor implements Predictor {
   /**
    *
    */
-  diffusionProgressCallback = (interiorDoc: InteriorType & Document) => async (pred: Prediction) => {
+  diffusionProgressCallback = (interiorDoc: InteriorType & Document) => (pred: Prediction) => {
     if (!interiorDoc) {
       return
     }
@@ -99,7 +99,7 @@ export default class ReplicatePredictor implements Predictor {
 
       if (interiorDoc?.progress !== this.#progress) {
         interiorDoc.progress = this.#progress
-        await interiorDoc.save()
+        interiorDoc.save()
       }
     }
   }
@@ -158,7 +158,7 @@ export default class ReplicatePredictor implements Predictor {
             : {}),
         },
         webhook: `${config.replicate.stableDiffusion.webhook}?id=${interiorDoc.id}`,
-        webhook_events_filter: ['output', 'logs', 'completed'],
+        webhook_events_filter: ['output', 'logs'],
       }
       // this.#diffusionProgressCallback(interiorDoc)
     )
