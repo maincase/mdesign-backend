@@ -12,7 +12,7 @@ export default class ReplicatePredictor implements Predictor {
   })
 
   // Should we enable refiner pipe for diffusion predictions
-  #enableRefiner: boolean = true
+  static #enableRefiner: boolean = true
 
   #initialProgress: number = 1.5
 
@@ -55,7 +55,11 @@ export default class ReplicatePredictor implements Predictor {
   /**
    *
    */
-  #diffusionProgressCallback = (interiorDoc: InteriorType & Document) => async (pred: Prediction) => {
+  diffusionProgressCallback = (interiorDoc: InteriorType & Document) => async (pred: Prediction) => {
+    if (!interiorDoc) {
+      return
+    }
+
     const progresses = this.#parseProgress(pred.logs)
 
     if (progresses.length === 0) {
@@ -68,7 +72,7 @@ export default class ReplicatePredictor implements Predictor {
     if (part > 0 && total > 0) {
       if (part <= total && !this.#refinerInitialProgress) {
         // If we have refiner pipe enabled, then SD inference will take 60 percent of total
-        const totalInferencePercent = this.#enableRefiner ? 60 : 80
+        const totalInferencePercent = ReplicatePredictor.#enableRefiner ? 60 : 80
 
         this.#progress = this.#initialProgress + (part / total) * totalInferencePercent
 
@@ -77,7 +81,12 @@ export default class ReplicatePredictor implements Predictor {
         }
       }
 
-      if (progresses.length > 1 && !!this.#progress && !!this.#refinerInitialProgress && this.#enableRefiner) {
+      if (
+        progresses.length > 1 &&
+        !!this.#progress &&
+        !!this.#refinerInitialProgress &&
+        ReplicatePredictor.#enableRefiner
+      ) {
         const [partRefiner, totalRefiner] = progresses[1]
 
         if (partRefiner > 0 && totalRefiner > 0 && partRefiner <= totalRefiner) {
@@ -88,7 +97,7 @@ export default class ReplicatePredictor implements Predictor {
         }
       }
 
-      if (interiorDoc.progress !== this.#progress) {
+      if (interiorDoc?.progress !== this.#progress) {
         interiorDoc.progress = this.#progress
         await interiorDoc.save()
       }
@@ -118,10 +127,14 @@ export default class ReplicatePredictor implements Predictor {
       .replaceAll('${style}', style)
       .replaceAll('${room}', room)
 
-    const predictionURL: `${string}/${string}:${string}` = config.replicate.stableDiffusion.URL
+    const predictionURL: `${string}/${string}:${string}` = config.replicate.stableDiffusion.URL.split(':')[0].split('/')
 
-    const output = (await this.#replicate.run(
-      predictionURL,
+    const predictionOwner = predictionURL[0]
+    const predictionName = predictionURL[1]
+
+    const prediction = await this.#replicate.deployments.predictions.create(
+      predictionOwner,
+      predictionName,
       {
         input: {
           image: `data:${imageMimeType};base64,${image}`,
@@ -135,7 +148,7 @@ export default class ReplicatePredictor implements Predictor {
             'seed',
           ]),
 
-          ...(this.#enableRefiner
+          ...(ReplicatePredictor.#enableRefiner
             ? {
                 refine: 'expert_ensemble_refiner', // 'base_image_refiner',
 
@@ -144,12 +157,15 @@ export default class ReplicatePredictor implements Predictor {
               }
             : {}),
         },
-      },
-      this.#diffusionProgressCallback(interiorDoc)
-    )) as string[]
+        webhook: `${config.replicate.stableDiffusion.webhook}?id=${interiorDoc.id}`,
+        webhook_events_filter: ['output', 'logs', 'completed'],
+      }
+      // this.#diffusionProgressCallback(interiorDoc)
+    )
+
+    const output = (await this.#replicate.wait(prediction, {})).output
 
     let predictions: string[] = []
-
     for (const render of await Promise.all(output.map((renderUrl) => got(renderUrl, { responseType: 'buffer' })))) {
       predictions.push(render.body.toString('base64'))
     }
@@ -161,7 +177,7 @@ export default class ReplicatePredictor implements Predictor {
    *
    * @param renders
    */
-  async *createDETRResNetPredictions(renders: string[]) {
+  async *createDETRResNetPredictions(/* renders: string[] */) {
     throw new Error('Not implemented yet, Replicate does not provide detr_resnet50 as public model')
     // const predictionURL: `${string}/${string}:${string}` = config.replicate.detrResNet.URL
     // let processedCount = 0

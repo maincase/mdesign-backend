@@ -1,4 +1,5 @@
 import { Storage } from '@google-cloud/storage'
+import { Document } from 'mongoose'
 import path from 'node:path'
 import config from '../../../config'
 import CustomPredictor from '../../predictors/CustomPredictor'
@@ -11,6 +12,9 @@ class InteriorRepository {
     // projectId: config.googleCloud.projectId,
     keyFilename: path.join(config.googleCloud.storage.serviceAccountKey),
   }).bucket(config.googleCloud.storage.bucketName)
+
+  // Current active interior renders
+  static activeRenderDocs: Record<string, InteriorType & Document> = {}
 
   /**
    * Get interiors with pagination
@@ -167,14 +171,21 @@ class InteriorRepository {
   ): Promise<{ id: string; renders: string[] }> {
     const predictor = this.#setupPredictor('stableDiffusion')
 
+    // Add document to active renders
+    InteriorRepository.activeRenderDocs[interiorDoc.id] = interiorDoc
+
+    const renders = await predictor.createDiffusionPredictions(
+      predictor instanceof ReplicatePredictor
+        ? { interiorDoc, image, imageMimeType, room, style }
+        : { interiorDoc, image, room, style }
+    )
+
+    // After prediction is done, remove interior doc from active renders
+    delete InteriorRepository.activeRenderDocs[interiorDoc.id]
+
     return {
       id: interiorDoc.id,
-      renders:
-        (await predictor.createDiffusionPredictions(
-          predictor instanceof ReplicatePredictor
-            ? { interiorDoc, image, imageMimeType, room, style }
-            : { interiorDoc, image, room, style }
-        )) ?? [],
+      renders,
     }
   }
 

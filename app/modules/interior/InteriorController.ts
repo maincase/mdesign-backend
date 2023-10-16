@@ -2,6 +2,7 @@ import debug from 'debug'
 import { Request, Response } from 'express'
 import { createHash } from 'node:crypto'
 import sharp from 'sharp'
+import ReplicatePredictor from '../../predictors/ReplicatePredictor'
 import { ResponseOptions } from '../../utils/responses'
 import InteriorRepository from './InteriorRepository'
 import type { InteriorType, Render } from './InteriorTypes'
@@ -207,6 +208,14 @@ class InteriorController {
         debug('mdesign:interior:controller')(`Error occurred while creating interior: ${err.message}`)
       }
     }
+  }
+
+  static async createInteriorCallback(req: Request, res: Response & ResponseOptions) {
+    const predictor = new ReplicatePredictor()
+
+    predictor.diffusionProgressCallback(InteriorRepository.activeRenderDocs[req.query.id as string])(req.body)
+
+    res.ok('Ok')
   }
 }
 

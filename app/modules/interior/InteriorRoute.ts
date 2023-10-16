@@ -10,6 +10,10 @@ const InteriorRoute = {
     },
     '/create': {
       post: [InteriorController.createInterior],
+
+      '/callback': {
+        post: [InteriorController.createInteriorCallback],
+      },
     },
   },
 }
