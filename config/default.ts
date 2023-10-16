@@ -41,7 +41,7 @@ export default {
   },
   predictionProvider: {
     stableDiffusion: {
-      URL: 'http://localhost:3080/predictions/stable_diffusion_xl-0.1.17',
+      URL: 'http://localhost:3080/predictions/stable_diffusion_xl-0.1.23',
       // prompt:
       //   'Transform the given space into a fully furnished photo-realistic %s %s with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
       // prompt:
@@ -61,7 +61,7 @@ export default {
       generator_seed: 2147483647,
     },
     detrResNet: {
-      URL: 'http://localhost:3080/predictions/detr_resnet-0.1.17',
+      URL: 'http://localhost:3080/predictions/detr_resnet-0.1.23',
     },
   },
   replicate: {

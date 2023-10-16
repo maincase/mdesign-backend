@@ -80,6 +80,7 @@ class InteriorRepository {
    */
   static saveImageToGCP(name: string, image: string) {
     const interiorImage = this.#bucket.file(`interiors/${name}`)
+
     return interiorImage.save(Buffer.from(image, 'base64'))
   }
 
@@ -147,7 +148,7 @@ class InteriorRepository {
       return new CustomPredictor()
     }
 
-    return
+    throw new Error('No predictor provided')
   }
 
   /**
@@ -169,7 +170,7 @@ class InteriorRepository {
     return {
       id: interiorDoc.id,
       renders:
-        (await predictor?.createDiffusionPredictions(
+        (await predictor.createDiffusionPredictions(
           predictor instanceof ReplicatePredictor
             ? { interiorDoc, image, imageMimeType, room, style }
             : { interiorDoc, image, room, style }
@@ -184,7 +185,7 @@ class InteriorRepository {
   static async *createDETRResNetPredictions(renders: string[]) {
     const predictor = this.#setupPredictor('detrResNet')
 
-    return yield* predictor?.createDETRResNetPredictions(renders) ?? []
+    return yield* predictor.createDETRResNetPredictions(renders)
   }
 }
 

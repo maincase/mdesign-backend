@@ -1,7 +1,7 @@
 export default {
   predictionProvider: {
     detrResNet: {
-      URL: 'http://7575496576911540224.aiplatform.googleapis.com/v1/models/5065241161954754560:predict',
+      URL: 'https://us-central1-aiplatform.googleapis.com/v1/projects/modern-design-ai/locations/us-central1/endpoints/1420764736156336128:predict',
     },
   },
 }

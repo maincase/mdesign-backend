@@ -1,14 +1,16 @@
+import debug from 'debug'
 import got from 'got'
 import pick from 'lodash.pick'
 import { Document } from 'mongoose'
 import config from '../../config'
 import { InteriorType } from '../modules/interior/InteriorTypes'
+import Utils from '../utils/Utils'
 import Predictor from './Predictor'
 
 export default class CustomPredictor implements Predictor {
-  // #gcpAiPlatformHostname = 'aiplatform.googleapis.com'
+  #gcpAiPlatformHostname = 'aiplatform.googleapis.com'
 
-  // #gcpToken
+  #gcpToken
 
   /**
    *
@@ -34,33 +36,33 @@ export default class CustomPredictor implements Predictor {
 
     const predictionURL = config.predictionProvider.stableDiffusion.URL as string
 
-    // let headers
+    let headers
 
-    // if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
-    //   /**
-    //    * NOTE: We should generate new token on each request as with current app engine scaling configuration in `app.yaml` file,
-    //    *        we only have one instance running, causing single token to be used by all requests. Time outing this token
-    //    *        causes VertexAI no longer to process requests.
-    //    */
-    //   // if (!this.#gcpToken) {
-    //   this.#gcpToken = await Utils.getGCPToken()
-    //   // }
+    if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
+      /**
+       * NOTE: We should generate new token on each request as with current app engine scaling configuration in `app.yaml` file,
+       *        we only have one instance running, causing single token to be used by all requests. Time outing this token
+       *        causes VertexAI no longer to process requests.
+       */
+      // if (!this.#gcpToken) {
+      this.#gcpToken = await Utils.getGCPToken()
+      // }
 
-    //   if (!!this.#gcpToken) {
-    //     headers = { Authorization: `Bearer ${this.#gcpToken}` }
-    //   } else {
-    //     debug('mdesign:interior:ai:stable-diffusion')("Can't get GCP token!!!")
+      if (!!this.#gcpToken) {
+        headers = { Authorization: `Bearer ${this.#gcpToken}` }
+      } else {
+        debug('mdesign:interior:ai:stable-diffusion')("Can't get GCP token!!!")
 
-    //     throw new Error("Can't get GCP token!!!")
-    //   }
-    // }
+        throw new Error("Can't get GCP token!!!")
+      }
+    }
 
     const diffusionRes = await got
       .post(predictionURL, {
         retry: {
           limit: 0,
         },
-        // ...(!!headers ? { headers } : {}),
+        ...(!!headers ? { headers } : {}),
         json: {
           instances: [
             {
@@ -90,29 +92,29 @@ export default class CustomPredictor implements Predictor {
    *
    * @param renders
    */
-  async *createDETRResNetPredictions(renders) {
+  async *createDETRResNetPredictions(renders: string[]) {
     const predictionURL = config.predictionProvider.detrResNet.URL as string
 
-    // let headers
+    let headers
 
-    // if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
-    //   /**
-    //    * NOTE: We should generate new token on each request as with current app engine scaling configuration in `app.yaml` file,
-    //    *        we only have one instance running, causing single token to be used by all requests. Time outing this token
-    //    *        causes VertexAI no longer to process requests.
-    //    */
-    //   // if (!this.#gcpToken) {
-    //   this.#gcpToken = await Utils.getGCPToken()
-    //   // }
+    if (predictionURL.includes(this.#gcpAiPlatformHostname)) {
+      /**
+       * NOTE: We should generate new token on each request as with current app engine scaling configuration in `app.yaml` file,
+       *        we only have one instance running, causing single token to be used by all requests. Time outing this token
+       *        causes VertexAI no longer to process requests.
+       */
+      // if (!this.#gcpToken) {
+      this.#gcpToken = await Utils.getGCPToken()
+      // }
 
-    //   if (!!this.#gcpToken) {
-    //     headers = { Authorization: `Bearer ${this.#gcpToken}` }
-    //   } else {
-    //     debug('mdesign:interior:ai:detr-resnet')("Can't get GCP token!!!")
+      if (!!this.#gcpToken) {
+        headers = { Authorization: `Bearer ${this.#gcpToken}` }
+      } else {
+        debug('mdesign:interior:ai:detr-resnet')("Can't get GCP token!!!")
 
-    //     throw new Error("Can't get GCP token!!!")
-    //   }
-    // }
+        throw new Error("Can't get GCP token!!!")
+      }
+    }
 
     let processedCount = 0
 
@@ -121,16 +123,20 @@ export default class CustomPredictor implements Predictor {
 
       processedCount += 1
 
+      const img = !!pred.match(/.*.(jpeg|png|jpg)/)
+        ? `https://storage.googleapis.com/${config.googleCloud.storage.bucketName}/interiors/${pred}`
+        : pred
+
       const detrRes = await got
         .post(predictionURL, {
           retry: {
             limit: 0,
           },
-          // ...(!!headers ? { headers } : {}),
+          ...(!!headers ? { headers } : {}),
           json: {
             instances: [
               {
-                image: pred,
+                image: img,
               },
             ],
           },
@@ -139,9 +145,12 @@ export default class CustomPredictor implements Predictor {
 
       const detrPredictions = detrRes.predictions[0]
 
-      yield {
-        objects: detrPredictions,
-      }
+      yield [
+        processedCount - 1,
+        {
+          objects: detrPredictions,
+        },
+      ] as [number, { objects: [] }]
     }
   }
 }

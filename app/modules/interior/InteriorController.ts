@@ -129,18 +129,35 @@ class InteriorController {
         `Received predictions from stable diffusion model: ${diffusionPredictions.renders.length}`
       )
 
+      // NOTE: Finished with rendering new interiors, and we have total of 81.5% progress including initial db record progress
+      interiorDoc.progress = 81.5
+
       /**
        * NOTE: Start object detection using detr-resnet model on newly created renders
        */
       debug('mdesign:ai:detr-resnet')('Starting object detection using det-resnet model')
 
-      const detrResNetPredictions: Partial<Render>[] = []
+      const detrResNetPredictions: Render[] = []
 
-      // NOTE: Finished with rendering new interiors, and we have total of 81.5% progress including initial db record progress
-      interiorDoc.progress = 81.5
+      // Upload newly created renders to google storage
+      for (const [ind, pred] of diffusionPredictions.renders.entries()) {
+        const renderImageName = calculateImgSha(pred)
 
-      for await (const pred of InteriorRepository.createDETRResNetPredictions(diffusionPredictions.renders)) {
-        detrResNetPredictions.push(pred)
+        await InteriorRepository.saveImageToGCP(renderImageName, pred)
+
+        detrResNetPredictions[ind] = {
+          image: renderImageName,
+        } as Render
+
+        interiorDoc.progress += 2
+
+        await interiorDoc.save()
+      }
+
+      for await (const [ind, pred] of InteriorRepository.createDETRResNetPredictions(
+        detrResNetPredictions.map((r) => r.image)
+      )) {
+        detrResNetPredictions[ind].objects = pred.objects
 
         // Each object prediction done on each of the new renders will be additional 3% progress
         interiorDoc.progress += 3
@@ -170,19 +187,6 @@ class InteriorController {
         style,
         image: imageName,
         renders: detrResNetPredictions as Render[],
-      }
-
-      // Upload newly created renders to google storage
-      for (const [ind, pred] of diffusionPredictions.renders.entries()) {
-        const renderImageName = calculateImgSha(pred)
-
-        await InteriorRepository.saveImageToGCP(renderImageName, pred)
-
-        interior.renders[ind].image = renderImageName
-
-        interiorDoc.progress += 2
-
-        await interiorDoc.save()
       }
 
       debug('mdesign:interior:db')('Saving interior object to database...')

@@ -162,24 +162,23 @@ export default class ReplicatePredictor implements Predictor {
    * @param renders
    */
   async *createDETRResNetPredictions(renders: string[]) {
-    const predictionURL: `${string}/${string}:${string}` = config.replicate.detrResNet.URL
-
-    let processedCount = 0
-
-    while (processedCount < renders.length) {
-      let pred = renders[processedCount]
-
-      processedCount += 1
-
-      const output = (await this.#replicate.run(predictionURL, {
-        input: {
-          image: `data:image/png;base64,${pred}`,
-        },
-      })) as []
-
-      yield {
-        objects: output,
-      }
-    }
+    throw new Error('Not implemented yet, Replicate does not provide detr_resnet50 as public model')
+    // const predictionURL: `${string}/${string}:${string}` = config.replicate.detrResNet.URL
+    // let processedCount = 0
+    // while (processedCount < renders.length) {
+    //   let pred = renders[processedCount]
+    //   processedCount += 1
+    //   const output = (await this.#replicate.run(predictionURL, {
+    //     input: {
+    //       image: `data:image/png;base64,${pred}`,
+    //     },
+    //   })) as []
+    //   yield [
+    //     processedCount - 1,
+    //     {
+    //       objects: output,
+    //     },
+    //   ] as [number, { objects: [] }]
+    // }
   }
 }
