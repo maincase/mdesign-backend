@@ -32,7 +32,7 @@ export default {
   googleCloud: {
     // projectId: 'modern-design-ai',
     storage: {
-      bucketName: 'modern-design-storage',
+      bucketName: 'mdesign-public',
       serviceAccountKey: 'modern-design-ai-8a0b91b760d4.json',
     },
     ai: {
