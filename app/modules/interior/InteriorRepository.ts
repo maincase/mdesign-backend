@@ -1,5 +1,7 @@
 import { Storage } from '@google-cloud/storage'
 import debug from 'debug'
+import { Request } from 'express'
+import got from 'got'
 import pick from 'lodash.pick'
 import { Document, FlattenMaps } from 'mongoose'
 import { createHash } from 'node:crypto'
@@ -20,6 +22,10 @@ class InteriorRepository {
 
   // Current active interior renders
   static activeRenderDocs: Record<string, Awaited<ReturnType<typeof InteriorRepository.createRecord>>> = {}
+
+  // Callback timer and queue for processing callbacks
+  static #callbackTimer: NodeJS.Timeout | undefined = undefined
+  static #callbackQueue: (() => void)[] = []
 
   /**
    * Get interiors with pagination
@@ -185,6 +191,61 @@ class InteriorRepository {
         ? { interiorDoc, image, imageMimeType, room, style }
         : { interiorDoc, image, room, style }
     )
+  }
+
+  /**
+   *
+   * @returns
+   */
+  static #startCallbackProcessing() {
+    const callback = this.#callbackQueue.shift()
+
+    if (!!callback) {
+      this.#callbackTimer = setTimeout(() => {
+        callback()
+
+        clearTimeout(this.#callbackTimer)
+
+        if (this.#callbackQueue.length > 0) {
+          this.#startCallbackProcessing()
+        } else {
+          this.#callbackTimer = undefined
+        }
+      }, 300)
+    }
+  }
+
+  /**
+   *
+   * @param req
+   * @param res
+   */
+  static async createInteriorCallback(req: Request) {
+    if (req.body.status === 'succeeded') {
+      const output = req.body.output
+
+      let predictions: string[] = []
+      for (const render of await Promise.all(output.map((renderUrl) => got(renderUrl, { responseType: 'buffer' })))) {
+        predictions.push(render.body.toString('base64'))
+      }
+
+      this.#callbackQueue.push(() =>
+        InteriorRepository.processDiffusionPredictions({
+          id: req.query.id as string,
+          renders: predictions,
+        })
+      )
+    } else {
+      const predictor = new ReplicatePredictor()
+
+      const interiorDoc = InteriorRepository.activeRenderDocs[req.query.id as string]
+
+      this.#callbackQueue.push(() => predictor.diffusionProgressCallback(interiorDoc)(req.body))
+    }
+
+    if (!this.#callbackTimer) {
+      this.#startCallbackProcessing()
+    }
   }
 
   /**
