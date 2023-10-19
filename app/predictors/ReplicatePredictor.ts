@@ -126,15 +126,15 @@ export default class ReplicatePredictor implements Predictor {
       .replaceAll('${style}', style)
       .replaceAll('${room}', room)
 
-    const predictionURL: `${string}/${string}:${string}` = config.replicate.stableDiffusion.URL.split(':')[0].split('/')
+    const predictionURL: `${string}/${string}:${string}` = config.replicate.stableDiffusion.URL.split(':') // [0].split('/')
+    const predictionVersion = predictionURL[1]
 
-    const predictionOwner = predictionURL[0]
-    const predictionName = predictionURL[1]
+    // const predictionOwner = predictionURL[0]
+    // const predictionName = predictionURL[1]
 
-    this.#replicate.deployments.predictions.create(
-      predictionOwner,
-      predictionName,
+    this.#replicate.predictions.create(
       {
+        version: predictionVersion,
         input: {
           image: `data:${imageMimeType};base64,${image}`,
           prompt,
