@@ -1,12 +1,12 @@
 {
   "name": "modern-design-backend",
-  "version": "0.0.44",
+  "version": "0.0.45",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "./node_modules/.bin/cross-env DEBUG=mdesign:* NODE_ENV=development TS_NODE_FILES=true nodemon -e js,mjs,json,ts,mts --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm ./bin/www.ts'",
-    "build": "./node_modules/.bin/cross-env NODE_ENV=production ./node_modules/.bin/rimraf build && ./node_modules/.bin/tsc && ./node_modules/.bin/copyfiles ./bin/www ./build",
-    "start:production": "./node_modules/.bin/cross-env DEBUG=mdesign:* NODE_ENV=production node --experimental-specifier-resolution=node --loader ts-node/esm ./build/bin/www",
+    "dev": "cross-env DEBUG=mdesign:* NODE_ENV=development TS_NODE_FILES=true nodemon -e js,mjs,json,ts,mts --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm ./bin/www'",
+    "build": "cross-env NODE_ENV=production rimraf build && tsc && copyfiles ./bin/www ./build",
+    "start:production": "cross-env DEBUG=mdesign:* NODE_ENV=production node --experimental-specifier-resolution=node --loader ts-node/esm ./build/bin/www",
     "eslint": "eslint --ext .ts,.tsx .",
     "eslint:check": "eslint --print-config . | eslint-config-prettier-check"
   },
