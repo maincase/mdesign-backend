@@ -1,12 +1,12 @@
 {
   "name": "modern-design-backend",
-  "version": "0.0.46",
+  "version": "0.0.47",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "cross-env DEBUG=mdesign:* NODE_ENV=development TS_NODE_FILES=true nodemon -e js,mjs,json,ts,mts --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm ./bin/www'",
     "build": "cross-env NODE_ENV=production rimraf build && tsc && copyfiles ./bin/www ./build",
-    "start:production": "cross-env DEBUG=mdesign:* NODE_ENV=production node --experimental-specifier-resolution=node --loader ts-node/esm ./build/bin/www",
+    "start:production": "cross-env DEBUG=mdesign:* NODE_ENV=production node --experimental-specifier-resolution=node --loader ts-node/esm  ./build/bin/www",
     "eslint": "eslint --ext .ts,.tsx .",
     "eslint:check": "eslint --print-config . | eslint-config-prettier-check"
   },
@@ -32,7 +32,9 @@
     "multer": "1.4.5-lts.1",
     "passport": "^0.6.0",
     "replicate": "^0.20.1",
-    "sharp": "^0.32.6"
+    "sharp": "^0.32.6",
+    "ts-node": "^10.9.1",
+    "cross-env": "^7.0.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.1",
@@ -47,7 +49,6 @@
     "@typescript-eslint/eslint-plugin": "^6.9.0",
     "@typescript-eslint/parser": "^6.9.0",
     "copyfiles": "^2.4.1",
-    "cross-env": "^7.0.3",
     "eslint": "^8.52.0",
     "eslint-config-airbnb-typescript-prettier": "^5.0.0",
     "eslint-plugin-import": "^2.29.0",
@@ -57,7 +58,6 @@
     "nodemon": "^3.0.1",
     "prettier": "^3.0.3",
     "rimraf": "^5.0.5",
-    "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   }
 }
