@@ -1,6 +1,6 @@
 service: mdesign-backend
 env: standard
-runtime: nodejs18
+runtime: nodejs20
 
 instance_class: B2
 

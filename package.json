@@ -1,6 +1,6 @@
 {
   "name": "modern-design-backend",
-  "version": "0.0.41",
+  "version": "0.0.42",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,10 +11,10 @@
     "eslint:check": "eslint --print-config . | eslint-config-prettier-check"
   },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
   "dependencies": {
-    "@google-cloud/storage": "^7.3.0",
+    "@google-cloud/storage": "^7.3.2",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "compression": "^1.7.4",
@@ -27,7 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "lodash.merge": "^4.6.2",
     "lodash.pick": "^4.4.0",
-    "mongodb": "^6.1.0",
+    "mongodb": "^6.2.0",
     "mongoose": "^7.6.3",
     "multer": "1.4.5-lts.1",
     "passport": "^0.6.0",
@@ -43,14 +43,14 @@
     "@types/lodash.merge": "^4.6.8",
     "@types/lodash.pick": "^4.4.8",
     "@types/multer": "^1.4.9",
-    "@types/node": "^20.8.7",
-    "@typescript-eslint/eslint-plugin": "^6.8.0",
-    "@typescript-eslint/parser": "^6.8.0",
+    "@types/node": "^20.8.9",
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
+    "@typescript-eslint/parser": "^6.9.0",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
-    "eslint": "^8.51.0",
+    "eslint": "^8.52.0",
     "eslint-config-airbnb-typescript-prettier": "^5.0.0",
-    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-standard": "^4.1.0",
