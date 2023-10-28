@@ -1,10 +1,10 @@
 service: mdesign-backend
 env: standard
-runtime: nodejs20
+runtime: nodejs18
 
 instance_class: B2
 
-entrypoint: npm run start:production
+entrypoint: node --experimental-specifier-resolution=node ./build/bin/www
 
 # vpc_access_connector:
 #   name: projects/modern-design-ai/locations/us-central1/connectors/mdesign

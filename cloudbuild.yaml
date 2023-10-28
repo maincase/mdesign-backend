@@ -1,9 +1,9 @@
 steps:
-  - name: 'node:lts-iron'
+  - name: 'node:lts-hydrogen'
     entrypoint: 'npm'
     args: ['install']
 
-  - name: 'node:lts-iron'
+  - name: 'node:lts-hydrogen'
     entrypoint: 'npm'
     args: ['run', 'build']
 
