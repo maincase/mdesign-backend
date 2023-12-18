@@ -1,4 +1,5 @@
 import { Storage } from '@google-cloud/storage'
+import vision from '@google-cloud/vision'
 import debug from 'debug'
 import { Request } from 'express'
 import got from 'got'
@@ -6,6 +7,7 @@ import pick from 'lodash.pick'
 import { Document, FlattenMaps } from 'mongoose'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
+import sharp from 'sharp'
 import config from '../../../config'
 import CustomPredictor from '../../predictors/CustomPredictor'
 import ReplicatePredictor from '../../predictors/ReplicatePredictor'
@@ -20,8 +22,14 @@ class InteriorRepository {
     keyFilename: path.join(config.googleCloud.storage.serviceAccountKey),
   }).bucket(config.googleCloud.storage.bucketName)
 
+  // Google Vision image annotator client
+  static #annotatorClient = new vision.ImageAnnotatorClient({
+    // projectId: config.googleCloud.projectId,
+    keyFilename: path.join(config.googleCloud.storage.serviceAccountKey),
+  })
+
   // Current active interior renders
-  static activeRenderDocs: Record<string, Awaited<ReturnType<typeof InteriorRepository.createRecord>>> = {}
+  static #activeRenderDocs: Record<string, Awaited<ReturnType<typeof InteriorRepository.createRecord>>> = {}
 
   // Callback timer and queue for processing callbacks
   static #callbackTimer: NodeJS.Timeout | undefined = undefined
@@ -50,7 +58,28 @@ class InteriorRepository {
         transform: (render) => render?.toJSON(),
       })
 
-    return resultInteriors
+    const interiors = resultInteriors.map((interior) => ({
+      ...interior,
+      renders: interior.renders.map((render) => ({
+        ...render,
+        objects: render.objects.map((obj) => {
+          if (Array.isArray(obj?.[3])) {
+            let objNew = [...obj]
+
+            for (const [ind, val] of (obj?.[3] ?? []).entries()) {
+              const link = val?.link
+              objNew[3][ind] = link
+            }
+
+            return objNew
+          }
+
+          return obj
+        }),
+      })),
+    }))
+
+    return interiors
   }
 
   /**
@@ -104,7 +133,7 @@ class InteriorRepository {
    * @param inter
    * @returns
    */
-  static async updateRecord(
+  static async #updateRecord(
     interiorDoc: Awaited<ReturnType<typeof InteriorRepository.createRecord>>,
     inter: InteriorType
   ): Promise<FlattenMaps<InteriorType & Document<InteriorType>>> {
@@ -181,7 +210,7 @@ class InteriorRepository {
     style: string
   ) {
     // Add document to active renders
-    this.activeRenderDocs[interiorDoc.id] = interiorDoc
+    this.#activeRenderDocs[interiorDoc.id] = interiorDoc
 
     // Setup the predictor
     const predictor = this.#setupPredictor('stableDiffusion')
@@ -230,7 +259,7 @@ class InteriorRepository {
       }
 
       this.#callbackQueue.push(() =>
-        InteriorRepository.processDiffusionPredictions({
+        this.#processDiffusionPredictions({
           id: req.query.id as string,
           renders: predictions,
         })
@@ -238,7 +267,7 @@ class InteriorRepository {
     } else {
       const predictor = new ReplicatePredictor()
 
-      const interiorDoc = InteriorRepository.activeRenderDocs[req.query.id as string]
+      const interiorDoc = this.#activeRenderDocs[req.query.id as string]
 
       this.#callbackQueue.push(() => predictor.diffusionProgressCallback(interiorDoc)(req.body))
     }
@@ -250,11 +279,59 @@ class InteriorRepository {
 
   /**
    *
+   */
+  static async #matchObjectsToProducts(render: Render & { imageContent: string }) {
+    return Promise.all(
+      render.objects.map(async (obj) => {
+        if (Array.isArray(obj) && obj?.length === 3 && obj?.[1] > 0.8 && obj?.[2]?.length === 4) {
+          const contentSharp = sharp(Buffer.from(render.imageContent, 'base64')).extract({
+            left: Math.round(obj?.[2]?.[0]),
+            top: Math.round(obj?.[2]?.[1]),
+            width: Math.round(obj?.[2]?.[2] ?? 0) - Math.round(obj?.[2]?.[0] ?? 0),
+            height: Math.round(obj?.[2]?.[3] ?? 0) - Math.round(obj?.[2]?.[1] ?? 0),
+          })
+
+          const contentObj = (await contentSharp.toBuffer()).toString('base64')
+
+          const [response] = await this.#annotatorClient.batchAnnotateImages({
+            requests: [
+              {
+                image: { content: contentObj },
+                features: [{ type: 'PRODUCT_SEARCH' }],
+                imageContext: {
+                  productSearchParams: {
+                    productSet: config.googleCloud.vision.productSet,
+                    productCategories: [config.googleCloud.vision.productCategory],
+                    // filter: filter,
+                  },
+                },
+              },
+            ],
+          })
+
+          const similarProds = response.responses?.[0]?.productSearchResults?.results?.slice(0, 3) // return 3 most similar images
+
+          const matchingProducts = await global.db.ProductModel.find({
+            asin: {
+              $in: similarProds?.map((prod) => prod.product?.displayName),
+            },
+          })
+
+          if (matchingProducts.length > 0) {
+            obj.push(matchingProducts?.map((prod) => pick(prod, ['_id', 'link'])))
+          }
+        }
+      })
+    )
+  }
+
+  /**
+   *
    * @param interiorDoc
    * @param diffusionPredictions
    */
-  static async processDiffusionPredictions({ id, renders }: { id: string; renders: string[] }) {
-    const interiorDoc = this.activeRenderDocs[id]
+  static async #processDiffusionPredictions({ id, renders }: { id: string; renders: string[] }) {
+    const interiorDoc = this.#activeRenderDocs[id]
 
     debug('mdesign:ai:stable-diffusion')(`Received predictions from stable diffusion model: ${renders.length}`)
 
@@ -276,15 +353,23 @@ class InteriorRepository {
 
       detrResNetPredictions[ind] = {
         image: renderImageName,
-      } as Render
+        imageContent: pred,
+      } as Render & { imageContent: string }
 
       interiorDoc.progress += 2
 
       await interiorDoc.save()
     }
 
-    for await (const [ind, pred] of this.createDETRResNetPredictions(detrResNetPredictions.map((r) => r.image))) {
+    for await (const [ind, pred] of this.#createDETRResNetPredictions(detrResNetPredictions.map((r) => r.image))) {
       detrResNetPredictions[ind].objects = pred.objects
+
+      try {
+        // Try to find matching products in google vision database to objects in new renders
+        await this.#matchObjectsToProducts(detrResNetPredictions[ind] as Render & { imageContent: string })
+      } catch (err) {
+        debug('mdesign:ai:detr-resnet')('Error while matching objects to products', err)
+      }
 
       // Each object prediction done on each of the new renders will be additional 3% progress
       interiorDoc.progress += 3
@@ -312,19 +397,19 @@ class InteriorRepository {
     debug('mdesign:interior:db')('Saving interior object to database...')
 
     // Save final interior object to database.
-    const data = await this.updateRecord(this.activeRenderDocs[interiorDoc.id], interior)
+    const data = await this.#updateRecord(this.#activeRenderDocs[interiorDoc.id], interior)
 
     debug('mdesign:interior:db')(`Saved new interior with renders and objects to database: ${data?.id}`)
 
     // After prediction is done, remove interior doc from active renders
-    delete this.activeRenderDocs[interiorDoc.id]
+    delete this.#activeRenderDocs[interiorDoc.id]
   }
 
   /**
    *
    * @param renders
    */
-  static async *createDETRResNetPredictions(renders: string[]) {
+  static async *#createDETRResNetPredictions(renders: string[]) {
     // Setup the predictor
     const predictor = this.#setupPredictor('detrResNet')
 

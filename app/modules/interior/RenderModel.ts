@@ -3,7 +3,7 @@ import { model, Schema } from 'mongoose'
 const RenderSchema = new Schema(
   {
     image: { type: String, required: true },
-    objects: [Schema.Types.Mixed],
+    objects: [[{ type: Schema.Types.Mixed }]],
     interior: { type: Schema.Types.ObjectId, ref: 'Interior' },
   },
   {

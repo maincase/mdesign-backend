@@ -1,6 +1,6 @@
 export type Render = {
   image: string
-  objects: [][]
+  objects: any[][]
 }
 
 export type InteriorType = {
