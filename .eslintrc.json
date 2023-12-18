@@ -16,7 +16,8 @@
     "consistent-return": "off",
     "import/order": "off",
     "global-require": "off",
-    "import/prefer-default-export": "off"
+    "import/prefer-default-export": "off",
+    "@typescript-eslint/no-explicit-any": "off"
   },
   "settings": {
     "react": {
