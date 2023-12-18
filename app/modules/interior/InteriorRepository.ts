@@ -95,7 +95,28 @@ class InteriorRepository {
       transform: (render) => render.toJSON(),
     })
 
-    return resultInterior
+    const interior = {
+      ...resultInterior,
+      renders: resultInterior?.renders.map((render) => ({
+        ...render,
+        objects: render.objects.map((obj) => {
+          if (Array.isArray(obj?.[3])) {
+            let objNew = [...obj]
+
+            for (const [ind, val] of (obj?.[3] ?? []).entries()) {
+              const link = val?.link
+              objNew[3][ind] = link
+            }
+
+            return objNew
+          }
+
+          return obj
+        }),
+      })),
+    }
+
+    return interior
   }
 
   /**
