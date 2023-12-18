@@ -36,6 +36,11 @@ class InteriorRepository {
 
   static #callbackQueue: (() => void)[] = []
 
+  /**
+   *
+   * @param interiorResult
+   * @returns
+   */
   static #filterInteriorResults(interiorResult) {
     if (Array.isArray(interiorResult)) {
       return interiorResult.map((interior) => ({
