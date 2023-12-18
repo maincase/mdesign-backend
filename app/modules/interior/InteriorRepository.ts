@@ -33,6 +33,7 @@ class InteriorRepository {
 
   // Callback timer and queue for processing callbacks
   static #callbackTimer: NodeJS.Timeout | undefined = undefined
+
   static #callbackQueue: (() => void)[] = []
 
   static #filterInteriorResults(interiorResult) {
@@ -43,8 +44,9 @@ class InteriorRepository {
           ...render,
           objects: render.objects.map((obj) => {
             if (Array.isArray(obj?.[3])) {
-              let objNew = [...obj]
+              const objNew = [...obj]
 
+              // eslint-disable-next-line no-restricted-syntax
               for (const [ind, val] of (obj?.[3] ?? []).entries()) {
                 const link = val?.link
                 objNew[3][ind] = link
@@ -57,15 +59,18 @@ class InteriorRepository {
           }),
         })),
       }))
-    } else if (!!interiorResult.renders) {
+    }
+
+    if (interiorResult.renders) {
       return {
         ...interiorResult,
         renders: interiorResult?.renders.map((render) => ({
           ...render,
           objects: render.objects.map((obj) => {
             if (Array.isArray(obj?.[3])) {
-              let objNew = [...obj]
+              const objNew = [...obj]
 
+              // eslint-disable-next-line no-restricted-syntax
               for (const [ind, val] of (obj?.[3] ?? []).entries()) {
                 const link = val?.link
                 objNew[3][ind] = link
@@ -211,9 +216,11 @@ class InteriorRepository {
    * @returns
    */
   static #setupPredictor(predKey: string) {
-    if (!!config?.replicate?.[predKey]) {
+    if (config?.replicate?.[predKey]) {
       return new ReplicatePredictor()
-    } else if (!!config?.predictionProvider?.[predKey]) {
+    }
+
+    if (config?.predictionProvider?.[predKey]) {
       return new CustomPredictor()
     }
 
@@ -254,7 +261,7 @@ class InteriorRepository {
   static #startCallbackProcessing() {
     const callback = this.#callbackQueue.shift()
 
-    if (!!callback) {
+    if (callback) {
       this.#callbackTimer = setTimeout(() => {
         callback()
 
@@ -276,9 +283,10 @@ class InteriorRepository {
    */
   static async createInteriorCallback(req: Request) {
     if (req.body.status === 'succeeded') {
-      const output = req.body.output
+      const { output } = req.body
 
-      let predictions: string[] = []
+      const predictions: string[] = []
+      // eslint-disable-next-line no-restricted-syntax
       for (const render of await Promise.all(output.map((renderUrl) => got(renderUrl, { responseType: 'buffer' })))) {
         predictions.push(render.body.toString('base64'))
       }
@@ -371,9 +379,11 @@ class InteriorRepository {
     const detrResNetPredictions: Render[] = []
 
     // Upload newly created renders to google storage
+    // eslint-disable-next-line no-restricted-syntax
     for (const [ind, pred] of renders.entries()) {
       const renderImageName = calculateImgSha(pred)
 
+      // eslint-disable-next-line no-await-in-loop
       await this.saveImageToGCP(renderImageName, pred)
 
       detrResNetPredictions[ind] = {
@@ -383,9 +393,11 @@ class InteriorRepository {
 
       interiorDoc.progress += 2
 
+      // eslint-disable-next-line no-await-in-loop
       await interiorDoc.save()
     }
 
+    // eslint-disable-next-line no-restricted-syntax
     for await (const [ind, pred] of this.#createDETRResNetPredictions(detrResNetPredictions.map((r) => r.image))) {
       detrResNetPredictions[ind].objects = pred.objects
 
