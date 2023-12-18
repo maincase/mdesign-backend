@@ -35,6 +35,52 @@ class InteriorRepository {
   static #callbackTimer: NodeJS.Timeout | undefined = undefined
   static #callbackQueue: (() => void)[] = []
 
+  static #filterInteriorResults(interiorResult) {
+    if (Array.isArray(interiorResult)) {
+      return interiorResult.map((interior) => ({
+        ...interior,
+        renders: interior.renders.map((render) => ({
+          ...render,
+          objects: render.objects.map((obj) => {
+            if (Array.isArray(obj?.[3])) {
+              let objNew = [...obj]
+
+              for (const [ind, val] of (obj?.[3] ?? []).entries()) {
+                const link = val?.link
+                objNew[3][ind] = link
+              }
+
+              return objNew
+            }
+
+            return obj
+          }),
+        })),
+      }))
+    } else if (!!interiorResult.renders) {
+      return {
+        ...interiorResult,
+        renders: interiorResult?.renders.map((render) => ({
+          ...render,
+          objects: render.objects.map((obj) => {
+            if (Array.isArray(obj?.[3])) {
+              let objNew = [...obj]
+
+              for (const [ind, val] of (obj?.[3] ?? []).entries()) {
+                const link = val?.link
+                objNew[3][ind] = link
+              }
+
+              return objNew
+            }
+
+            return obj
+          }),
+        })),
+      }
+    }
+  }
+
   /**
    * Get interiors with pagination
    *
@@ -58,28 +104,7 @@ class InteriorRepository {
         transform: (render) => render?.toJSON(),
       })
 
-    const interiors = resultInteriors.map((interior) => ({
-      ...interior,
-      renders: interior.renders.map((render) => ({
-        ...render,
-        objects: render.objects.map((obj) => {
-          if (Array.isArray(obj?.[3])) {
-            let objNew = [...obj]
-
-            for (const [ind, val] of (obj?.[3] ?? []).entries()) {
-              const link = val?.link
-              objNew[3][ind] = link
-            }
-
-            return objNew
-          }
-
-          return obj
-        }),
-      })),
-    }))
-
-    return interiors
+    return this.#filterInteriorResults(resultInteriors)
   }
 
   /**
@@ -95,28 +120,7 @@ class InteriorRepository {
       transform: (render) => render.toJSON(),
     })
 
-    const interior = {
-      ...resultInterior,
-      renders: resultInterior?.renders.map((render) => ({
-        ...render,
-        objects: render.objects.map((obj) => {
-          if (Array.isArray(obj?.[3])) {
-            let objNew = [...obj]
-
-            for (const [ind, val] of (obj?.[3] ?? []).entries()) {
-              const link = val?.link
-              objNew[3][ind] = link
-            }
-
-            return objNew
-          }
-
-          return obj
-        }),
-      })),
-    }
-
-    return interior
+    return this.#filterInteriorResults(resultInterior)
   }
 
   /**
