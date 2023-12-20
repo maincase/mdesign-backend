@@ -54,7 +54,7 @@ export default class Utils {
     const client = await auth.getClient()
     const token = await client.getAccessToken()
 
-    if (!!token?.token) {
+    if (token?.token) {
       return token.token
     }
 

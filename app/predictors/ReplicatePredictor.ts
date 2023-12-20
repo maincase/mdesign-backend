@@ -25,7 +25,7 @@ export default class ReplicatePredictor implements Predictor {
    * @param str - Replicate logs
    * @returns - Array of [progress, total] pairs
    */
-  #parseProgress = (str: string = '0/0'): [progress: number, total: number][] => {
+  static #parseProgress = (str: string = '0/0'): [progress: number, total: number][] => {
     const matches = str?.match(/(\d+)\/(\d+)/gm) ?? ['0/0']
 
     const progresses = matches.reduce(
@@ -59,7 +59,7 @@ export default class ReplicatePredictor implements Predictor {
       return
     }
 
-    const progresses = this.#parseProgress(pred.logs)
+    const progresses = ReplicatePredictor.#parseProgress(pred.logs)
 
     if (progresses.length === 0) {
       return
@@ -123,7 +123,9 @@ export default class ReplicatePredictor implements Predictor {
   }) {
     // Format prompt with input from user
     const prompt = String(config.replicate.stableDiffusion.input.prompt)
+      // eslint-disable-next-line no-template-curly-in-string
       .replaceAll('${style}', style)
+      // eslint-disable-next-line no-template-curly-in-string
       .replaceAll('${room}', room)
 
     const predictionURL: `${string}/${string}:${string}` = config.replicate.stableDiffusion.URL.split(':') // [0].split('/')
@@ -167,6 +169,7 @@ export default class ReplicatePredictor implements Predictor {
    *
    * @param renders
    */
+  // eslint-disable-next-line require-yield
   async *createDETRResNetPredictions(/* renders: string[] */) {
     throw new Error('Not implemented yet, Replicate does not provide detr_resnet50 as public model')
     // const predictionURL: `${string}/${string}:${string}` = config.replicate.detrResNet.URL

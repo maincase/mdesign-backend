@@ -31,7 +31,9 @@ export default class CustomPredictor implements Predictor {
   }) {
     // Format prompt with input from user
     const prompt = String(config.predictionProvider.stableDiffusion.prompt)
+      // eslint-disable-next-line no-template-curly-in-string
       .replaceAll('${style}', style)
+      // eslint-disable-next-line no-template-curly-in-string
       .replaceAll('${room}', room)
 
     const predictionURL = config.predictionProvider.stableDiffusion.URL as string
@@ -48,7 +50,7 @@ export default class CustomPredictor implements Predictor {
       this.#gcpToken = await Utils.getGCPToken()
       // }
 
-      if (!!this.#gcpToken) {
+      if (this.#gcpToken) {
         headers = { Authorization: `Bearer ${this.#gcpToken}` }
       } else {
         debug('mdesign:interior:ai:stable-diffusion')("Can't get GCP token!!!")
@@ -62,7 +64,7 @@ export default class CustomPredictor implements Predictor {
         retry: {
           limit: 0,
         },
-        ...(!!headers ? { headers } : {}),
+        ...(headers ? { headers } : {}),
         json: {
           instances: [
             {
@@ -107,7 +109,7 @@ export default class CustomPredictor implements Predictor {
       this.#gcpToken = await Utils.getGCPToken()
       // }
 
-      if (!!this.#gcpToken) {
+      if (this.#gcpToken) {
         headers = { Authorization: `Bearer ${this.#gcpToken}` }
       } else {
         debug('mdesign:interior:ai:detr-resnet')("Can't get GCP token!!!")
@@ -119,20 +121,21 @@ export default class CustomPredictor implements Predictor {
     let processedCount = 0
 
     while (processedCount < renders.length) {
-      let pred = renders[processedCount]
+      const pred = renders[processedCount]
 
       processedCount += 1
 
-      const img = !!pred.match(/.*.(jpeg|png|jpg)/)
+      const img = pred.match(/.*.(jpeg|png|jpg)/)
         ? `https://storage.googleapis.com/${config.googleCloud.storage.bucketName}/interiors/${pred}`
         : pred
 
+      // eslint-disable-next-line no-await-in-loop
       const detrRes = await got
         .post(predictionURL, {
           retry: {
             limit: 0,
           },
-          ...(!!headers ? { headers } : {}),
+          ...(headers ? { headers } : {}),
           json: {
             instances: [
               {
