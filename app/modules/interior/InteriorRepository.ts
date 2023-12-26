@@ -41,54 +41,28 @@ class InteriorRepository {
    * @param interiorResult
    * @returns
    */
-  static #filterInteriorResults(interiorResult) {
-    if (Array.isArray(interiorResult)) {
-      return interiorResult.map((interior) => ({
-        ...interior,
-        renders: interior.renders.map((render) => ({
-          ...render,
-          objects: render.objects.map((obj) => {
-            if (Array.isArray(obj?.[3])) {
-              const objNew = [...obj]
+  static #filterInteriorResults(interiorResults: InteriorType[]) {
+    return (interiorResults ?? []).map((interior) => ({
+      ...interior,
+      renders: interior.renders.map((render) => ({
+        ...render,
+        objects: render.objects.map((obj) => {
+          if (Array.isArray(obj?.[3])) {
+            const objNew = [...obj]
 
-              // eslint-disable-next-line no-restricted-syntax
-              for (const [ind, val] of (obj?.[3] ?? []).entries()) {
-                const link = val?.link
-                objNew[3][ind] = link
-              }
-
-              return objNew
+            // eslint-disable-next-line no-restricted-syntax
+            for (const [ind, val] of (obj?.[3] ?? []).entries()) {
+              const link = val?.link
+              objNew[3][ind] = link
             }
 
-            return obj
-          }),
-        })),
-      }))
-    }
+            return objNew
+          }
 
-    if (interiorResult.renders) {
-      return {
-        ...interiorResult,
-        renders: interiorResult?.renders.map((render) => ({
-          ...render,
-          objects: render.objects.map((obj) => {
-            if (Array.isArray(obj?.[3])) {
-              const objNew = [...obj]
-
-              // eslint-disable-next-line no-restricted-syntax
-              for (const [ind, val] of (obj?.[3] ?? []).entries()) {
-                const link = val?.link
-                objNew[3][ind] = link
-              }
-
-              return objNew
-            }
-
-            return obj
-          }),
-        })),
-      }
-    }
+          return obj
+        }),
+      })),
+    }))
   }
 
   /**
@@ -130,7 +104,7 @@ class InteriorRepository {
       transform: (render) => render.toJSON(),
     })
 
-    return this.#filterInteriorResults(resultInterior)
+    return resultInterior
   }
 
   /**

@@ -94,7 +94,7 @@ export default {
         // generator_seed: 147903165,
         seed: 2147483647,
       },
-      webhook: 'https://5c55-94-43-116-18.ngrok-free.app/api/interior/create/callback',
+      webhook: 'https://d2d0-94-43-116-18.ngrok-free.app/api/interior/create/callback',
     },
     // detrResNet: {
     //   URL: 'replicate/resnet:dd782a3d531b61af491d1026434392e8afb40bfb53b8af35f727e80661489767',
