@@ -104,7 +104,11 @@ class InteriorRepository {
       transform: (render) => render.toJSON(),
     })
 
-    return resultInterior
+    if (resultInterior) {
+      return this.#filterInteriorResults([resultInterior.toJSON()])?.[0]
+    }
+
+    return null
   }
 
   /**
