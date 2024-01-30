@@ -70,9 +70,9 @@ export default {
       },
       webhook: 'https://1b46-94-43-116-18.ngrok-free.app/api/interior/create/callback',
     },
-    detrResNet: {
-      URL: 'maincase/mdesign-resnet50',
-    },
+    // detrResNet: {
+    //   URL: 'maincase/mdesign-resnet50',
+    // },
   },
   predictionProvider: {
     stableDiffusion: {
