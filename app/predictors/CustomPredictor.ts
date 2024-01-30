@@ -125,7 +125,7 @@ export default class CustomPredictor implements Predictor {
 
       processedCount += 1
 
-      const img = pred.match(/.*.(jpeg|png|jpg)/)
+      const image = pred.match(/.*.(jpeg|png|jpg)/)
         ? `https://storage.googleapis.com/${config.googleCloud.storage.bucketName}/interiors/${pred}`
         : pred
 
@@ -139,7 +139,7 @@ export default class CustomPredictor implements Predictor {
           json: {
             instances: [
               {
-                image: img,
+                image,
               },
             ],
           },

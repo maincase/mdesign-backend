@@ -169,25 +169,39 @@ export default class ReplicatePredictor implements Predictor {
    *
    * @param renders
    */
-  // eslint-disable-next-line require-yield
-  async *createDETRResNetPredictions(/* renders: string[] */) {
-    throw new Error('Not implemented yet, Replicate does not provide detr_resnet50 as public model')
-    // const predictionURL: `${string}/${string}:${string}` = config.replicate.detrResNet.URL
-    // let processedCount = 0
-    // while (processedCount < renders.length) {
-    //   let pred = renders[processedCount]
-    //   processedCount += 1
-    //   const output = (await this.#replicate.run(predictionURL, {
-    //     input: {
-    //       image: `data:image/png;base64,${pred}`,
-    //     },
-    //   })) as []
-    //   yield [
-    //     processedCount - 1,
-    //     {
-    //       objects: output,
-    //     },
-    //   ] as [number, { objects: [] }]
-    // }
+  async *createDETRResNetPredictions(renders: string[]) {
+    const predictionURL: `${string}/${string}:${string}` = config.replicate.detrResNet.URL
+
+    let processedCount = 0
+
+    while (processedCount < renders.length) {
+      const pred = renders[processedCount]
+
+      processedCount += 1
+
+      const image = pred.match(/.*.(jpeg|png|jpg)/)
+        ? `https://storage.googleapis.com/${config.googleCloud.storage.bucketName}/interiors/${pred}`
+        : pred
+
+      // Get deployment owner and name from replicate prediction URL
+      const deploymentOwner = predictionURL.split('/')[0]
+      const deploymentName = predictionURL.split('/')[1]
+
+      /* eslint-disable no-await-in-loop */
+      let prediction = await this.#replicate.deployments.predictions.create(deploymentOwner, deploymentName, {
+        input: {
+          image,
+        },
+      })
+      prediction = await this.#replicate.wait(prediction)
+      /* eslint-enable no-await-in-loop */
+
+      yield [
+        processedCount - 1,
+        {
+          objects: prediction.output,
+        },
+      ] as [number, { objects: [] }]
+    }
   }
 }

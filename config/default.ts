@@ -43,32 +43,6 @@ export default {
       productCategory: 'homegoods-v2',
     },
   },
-  predictionProvider: {
-    stableDiffusion: {
-      URL: 'http://localhost:3080/predictions/stable_diffusion_xl-0.1.24',
-      // prompt:
-      //   'Transform the given space into a fully furnished photo-realistic %s %s with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
-      // prompt:
-      //   'realistic %s %s very detailed, hyper sharp focus, super resolution, stunning intricate detail, photorealistic, dramatic lighting, octane render, lot of furniture, ultra realistic, 8k',
-      // prompt:
-      //   'interior design, %s style, %s design, white style, %s, modular furniture with cotton textiles, wooden floor, low ceiling, large steel windows viewing a city, carpet on the floor, minimalism, minimal, clean, tiny style, accent bright color, air, eclectic trends, gray, simple and functional',
-      prompt:
-        // eslint-disable-next-line no-template-curly-in-string
-        'photo-realistic ${room} with ${style} style, as much furniture and appliances as possible, with best quality and high detail, leave original walls',
-      negative_prompt:
-        'lowres, text, error, cropped, worst quality, low quality, jpeg artifacts, ugly, duplicate, out of frame, blurry, deformed, underexposed, overexposed, low contrast, watermark, signature, cut off',
-      inference_steps: 20,
-      // inference_steps: 100,
-      inference_strength: 0.75,
-      inference_guidance_scale: 15,
-      num_return_images: 3,
-      // generator_seed: 147903165,
-      generator_seed: 2147483647,
-    },
-    detrResNet: {
-      URL: 'http://localhost:3080/predictions/detr_resnet-0.1.24',
-    },
-  },
   replicate: {
     REPLICATE_API_TOKEN: 'r8_KzSGMBHRwJv5jGGfkavVQPrN64evMwV0vw4gG',
     stableDiffusion: {
@@ -94,11 +68,37 @@ export default {
         // generator_seed: 147903165,
         seed: 2147483647,
       },
-      webhook: 'https://d2d0-94-43-116-18.ngrok-free.app/api/interior/create/callback',
+      webhook: 'https://1b46-94-43-116-18.ngrok-free.app/api/interior/create/callback',
     },
-    // detrResNet: {
-    //   URL: 'replicate/resnet:dd782a3d531b61af491d1026434392e8afb40bfb53b8af35f727e80661489767',
-    // },
+    detrResNet: {
+      URL: 'maincase/mdesign-resnet50',
+    },
+  },
+  predictionProvider: {
+    stableDiffusion: {
+      URL: 'http://localhost:3080/predictions/stable_diffusion_xl-0.1.24',
+      // prompt:
+      //   'Transform the given space into a fully furnished photo-realistic %s %s with as much furniture as possible while maintaining a functional and visually appealing layout, taking into account walls and layout.',
+      // prompt:
+      //   'realistic %s %s very detailed, hyper sharp focus, super resolution, stunning intricate detail, photorealistic, dramatic lighting, octane render, lot of furniture, ultra realistic, 8k',
+      // prompt:
+      //   'interior design, %s style, %s design, white style, %s, modular furniture with cotton textiles, wooden floor, low ceiling, large steel windows viewing a city, carpet on the floor, minimalism, minimal, clean, tiny style, accent bright color, air, eclectic trends, gray, simple and functional',
+      prompt:
+        // eslint-disable-next-line no-template-curly-in-string
+        'photo-realistic ${room} with ${style} style, as much furniture and appliances as possible, with best quality and high detail, leave original walls',
+      negative_prompt:
+        'lowres, text, error, cropped, worst quality, low quality, jpeg artifacts, ugly, duplicate, out of frame, blurry, deformed, underexposed, overexposed, low contrast, watermark, signature, cut off',
+      inference_steps: 20,
+      // inference_steps: 100,
+      inference_strength: 0.75,
+      inference_guidance_scale: 15,
+      num_return_images: 3,
+      // generator_seed: 147903165,
+      generator_seed: 2147483647,
+    },
+    detrResNet: {
+      URL: 'http://localhost:3080/predictions/detr_resnet-0.1.24',
+    },
   },
   paginationLimit: 20,
 }
