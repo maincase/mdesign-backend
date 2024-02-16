@@ -9,23 +9,30 @@ import config from '../config'
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
+const whitelist = ['https://mdesign.ai', 'https://moderndesign.ai']
+if (process.env.NODE_ENV !== 'production') {
+  whitelist.push('http://localhost:3000')
+}
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || whitelist.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true,
+  allowedHeaders: 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, authorization, TimeZone',
+  methods: 'OPTIONS,GET,PUT,POST,DELETE',
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}
+
 const app = express()
 app.use(compression())
 app.use(helmet())
-app.use(
-  cors(
-    process.env.NODE_ENV !== 'production'
-      ? {
-          origin: true,
-          credentials: true,
-          allowedHeaders: 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, authorization, TimeZone',
-          methods: 'OPTIONS,GET,PUT,POST,DELETE',
-          preflightContinue: false,
-          optionsSuccessStatus: 204,
-        }
-      : { origin: false }
-  )
-)
+app.use(cors(corsOptions))
 
 const multerMid = Util.promisify(
   multer({
