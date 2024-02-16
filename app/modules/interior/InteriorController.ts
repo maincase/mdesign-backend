@@ -1,6 +1,7 @@
 import debug from 'debug'
 import { Request, Response } from 'express'
 import sharp from 'sharp'
+import Utils from '../../utils/Utils'
 import { ResponseOptions } from '../../utils/responses'
 import InteriorRepository, { calculateImgSha } from './InteriorRepository'
 
@@ -77,10 +78,24 @@ class InteriorController {
         throw new Error('Please provide an image')
       }
 
-      const { room, style } = req.body
+      const { room, style, captchaToken } = req.body
+
+      if (!captchaToken) {
+        throw new Error('Please provide captcha token')
+      }
 
       if (!room || !style) {
         throw new Error('Please provide room type and style')
+      }
+
+      const userIp = req.socket.remoteAddress
+
+      if (!userIp) {
+        throw new Error('No user remote IP address found')
+      }
+
+      if (!Utils.captchaVerify(captchaToken, userIp)) {
+        throw new Error('Captcha verification failed')
       }
 
       const imgSharp = sharp(req.file.buffer)

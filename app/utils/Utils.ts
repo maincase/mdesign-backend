@@ -60,4 +60,20 @@ export default class Utils {
 
     return undefined
   }
+
+  static async captchaVerify(token: string, ip: string) {
+    const formData = new FormData()
+    formData.append('secret', config.cloudflare.turnstile.secret)
+    formData.append('response', token)
+    formData.append('remoteip', ip)
+
+    const res = await fetch(config.cloudflare.turnstile.verifyUrl, {
+      body: formData,
+      method: 'POST',
+    })
+
+    const outcome = await res.json()
+
+    return !!outcome.success
+  }
 }

@@ -43,6 +43,12 @@ export default {
       productCategory: 'homegoods-v2',
     },
   },
+  cloudflare: {
+    turnstile: {
+      verifyUrl: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      secret: '0x4AAAAAAASDhYjLhbftz4O9uG-1DEI3_ZU',
+    },
+  },
   predictionProvider: {
     replicate: {
       REPLICATE_API_TOKEN: 'r8_KzSGMBHRwJv5jGGfkavVQPrN64evMwV0vw4gG',
