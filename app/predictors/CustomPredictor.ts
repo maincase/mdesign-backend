@@ -30,13 +30,13 @@ export default class CustomPredictor implements Predictor {
     room: string
   }) {
     // Format prompt with input from user
-    const prompt = String(config.predictionProvider.stableDiffusion.prompt)
+    const prompt = String(config.predictionProvider.mdesign.stableDiffusion.prompt)
       // eslint-disable-next-line no-template-curly-in-string
       .replaceAll('${style}', style)
       // eslint-disable-next-line no-template-curly-in-string
       .replaceAll('${room}', room)
 
-    const predictionURL = config.predictionProvider.stableDiffusion.URL as string
+    const predictionURL = config.predictionProvider.mdesign.stableDiffusion.URL as string
 
     let headers
 
@@ -71,7 +71,7 @@ export default class CustomPredictor implements Predictor {
               id: interiorDoc.id,
               image,
               prompt,
-              ...pick(config.predictionProvider.stableDiffusion, [
+              ...pick(config.predictionProvider.mdesign.stableDiffusion, [
                 'negative_prompt',
                 'inference_steps',
                 'inference_strength',
@@ -95,7 +95,7 @@ export default class CustomPredictor implements Predictor {
    * @param renders
    */
   async *createDETRResNetPredictions(renders: string[]) {
-    const predictionURL = config.predictionProvider.detrResNet.URL as string
+    const predictionURL = config.predictionProvider.mdesign.detrResNet.URL as string
 
     let headers
 

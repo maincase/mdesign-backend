@@ -7,7 +7,7 @@ import Predictor from './Predictor'
 
 export default class ReplicatePredictor implements Predictor {
   #replicate = new Replicate({
-    auth: config.replicate.REPLICATE_API_TOKEN,
+    auth: config.predictionProvider.replicate.REPLICATE_API_TOKEN,
   })
 
   // Should we enable refiner pipe for diffusion predictions
@@ -57,6 +57,10 @@ export default class ReplicatePredictor implements Predictor {
   diffusionProgressCallback = (interiorDoc: InteriorType & Document) => (pred: Prediction) => {
     if (!interiorDoc) {
       return
+    }
+
+    if (pred?.id && pred?.id.length) {
+      interiorDoc.providerId = pred.id
     }
 
     const progresses = ReplicatePredictor.#parseProgress(pred.logs)
@@ -122,13 +126,14 @@ export default class ReplicatePredictor implements Predictor {
     room: string
   }) {
     // Format prompt with input from user
-    const prompt = String(config.replicate.stableDiffusion.input.prompt)
+    const prompt = String(config.predictionProvider.replicate.stableDiffusion.input.prompt)
       // eslint-disable-next-line no-template-curly-in-string
       .replaceAll('${style}', style)
       // eslint-disable-next-line no-template-curly-in-string
       .replaceAll('${room}', room)
 
-    const predictionURL: `${string}/${string}:${string}` = config.replicate.stableDiffusion.URL.split(':') // [0].split('/')
+    const predictionURL: `${string}/${string}:${string}` =
+      config.predictionProvider.replicate.stableDiffusion.URL.split(':') // [0].split('/')
     const predictionVersion = predictionURL[1]
 
     // const predictionOwner = predictionURL[0]
@@ -140,13 +145,15 @@ export default class ReplicatePredictor implements Predictor {
         input: {
           image: `data:${imageMimeType};base64,${image}`,
           prompt,
-          ...pick(config.replicate.stableDiffusion.input, [
+          ...pick(config.predictionProvider.replicate.stableDiffusion.input, [
             'negative_prompt',
             'num_inference_steps',
             'prompt_strength',
             'guidance_scale',
-            'num_outputs',
+            'num_samples',
             'seed',
+            'scheduler',
+            'adapter_conditioning_factor',
           ]),
 
           ...(ReplicatePredictor.#enableRefiner
@@ -154,11 +161,11 @@ export default class ReplicatePredictor implements Predictor {
                 refine: 'expert_ensemble_refiner', // 'base_image_refiner',
 
                 // NOTE: If `refine` is `base_image_refiner`, give `refiner_steps`
-                // refiner_steps: config.replicate.stableDiffusion.input['num_inference_steps'],
+                // refiner_steps: config.predictionProvider.replicate.stableDiffusion.input['num_inference_steps'],
               }
             : {}),
         },
-        webhook: `${config.replicate.stableDiffusion.webhook}?id=${interiorDoc.id}`,
+        webhook: `${config.predictionProvider.replicate.stableDiffusion.webhook}?id=${interiorDoc.id}`,
         webhook_events_filter: ['output', 'logs', 'completed'],
       }
       // this.#diffusionProgressCallback(interiorDoc)
@@ -170,7 +177,7 @@ export default class ReplicatePredictor implements Predictor {
    * @param renders
    */
   async *createDETRResNetPredictions(renders: string[]) {
-    const predictionURL: `${string}/${string}:${string}` = config.replicate.detrResNet.URL
+    const predictionURL: `${string}/${string}:${string}` = config.predictionProvider.replicate.detrResNet.URL
 
     let processedCount = 0
 

@@ -10,4 +10,7 @@ export type InteriorType = {
   progress?: number
 
   renders: Render[]
+
+  provider: string
+  providerId?: string
 }

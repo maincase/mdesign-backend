@@ -10,5 +10,5 @@ export default interface Predictor {
     room: string
   }): Promise<string[] | void>
 
-  createDETRResNetPredictions(_: string[]): AsyncGenerator<[number, item: { objects: [] }], void, unknown>
+  createDETRResNetPredictions(_: string[]): AsyncGenerator<[count: number, item: { objects: [] }], void, unknown>
 }

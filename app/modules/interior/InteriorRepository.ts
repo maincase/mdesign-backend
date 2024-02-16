@@ -125,6 +125,10 @@ class InteriorRepository {
     interiorDoc.room = room
     interiorDoc.style = style
 
+    // Setup provider for new interior document
+    const providers = Object.keys(config?.predictionProvider)
+    interiorDoc.provider = providers[providers.indexOf('replicate')] ?? providers[0]
+
     interiorDoc.progress = initialProgress
 
     return interiorDoc.save()
@@ -199,11 +203,11 @@ class InteriorRepository {
    * @returns
    */
   static #setupPredictor(predKey: string) {
-    if (config?.replicate?.[predKey]) {
+    if (config?.predictionProvider?.replicate?.[predKey]) {
       return new ReplicatePredictor()
     }
 
-    if (config?.predictionProvider?.[predKey]) {
+    if (config?.predictionProvider?.mdesign?.[predKey]) {
       return new CustomPredictor()
     }
 
@@ -270,7 +274,9 @@ class InteriorRepository {
 
       const predictions: string[] = []
       // eslint-disable-next-line no-restricted-syntax
-      for (const render of await Promise.all(output.map((renderUrl) => got(renderUrl, { responseType: 'buffer' })))) {
+      for (const render of await Promise.all(
+        output.slice(1).map((renderUrl) => got(renderUrl, { responseType: 'buffer' }))
+      )) {
         predictions.push(render.body.toString('base64'))
       }
 
@@ -407,7 +413,7 @@ class InteriorRepository {
 
     // Create interior object which will be sent to repository
     const interior: InteriorType = {
-      ...pick(interiorDoc, ['room', 'style', 'image']),
+      ...pick(interiorDoc, ['room', 'style', 'image', 'provider', 'providerId']),
       renders: detrResNetPredictions as Render[],
     }
 

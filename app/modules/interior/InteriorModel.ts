@@ -8,6 +8,8 @@ const InteriorSchema = new Schema<InteriorType>(
     image: { type: String, required: true, unique: true },
     progress: { type: Number, required: true, default: 0 },
     renders: [{ type: Schema.Types.ObjectId, ref: 'Render' }],
+    provider: { type: String, required: true },
+    providerId: { type: String, unique: true },
   },
   {
     collection: 'interiors',
