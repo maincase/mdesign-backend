@@ -108,9 +108,24 @@ class InteriorController {
         )
       }
 
-      const imageBase64 = (await imgSharp.toBuffer()).toString('base64')
+      const imgPng = imgSharp.png({
+        quality: 100,
+        compressionLevel: 0,
+        force: true,
+      })
+      // const imgPngMeta = await imgPng.metadata()
+      const imgPngBase64 = (await imgPng.toBuffer()).toString('base64')
 
-      const imageName = calculateImgSha(`${imageBase64}+${room}+${style}`)
+      const imgJpeg = imgSharp.jpeg({
+        quality: 80,
+        progressive: true,
+        force: true,
+      })
+      // const imgJpegMeta = await imgJpeg.metadata()
+      const imgJpegBase64 = (await imgJpeg.toBuffer()).toString('base64')
+
+      const originalImageName = calculateImgSha(`${imgPngBase64}+${room}+${style}`, 'png')
+      const imageName = calculateImgSha(`${imgJpegBase64}+${room}+${style}`, 'jpeg')
 
       // Create initial record for interior in database
       const interiorDoc = await InteriorRepository.createRecord(imageName, room, style)
@@ -121,7 +136,8 @@ class InteriorController {
       // Upload original image to google storage
       debug('mdesign:cloud-storage')('Uploading original interior image to google storage')
 
-      await InteriorRepository.saveImageToGCP(imageName, imageBase64)
+      await InteriorRepository.saveImageToGCP(`${interiorDoc.id}-${originalImageName}`, imgPngBase64)
+      await InteriorRepository.saveImageToGCP(`${interiorDoc.id}-${imageName}`, imgJpegBase64)
 
       // Saving each image to google storage will be additional 2% progress
       interiorDoc.progress! += 2
@@ -131,13 +147,10 @@ class InteriorController {
       /**
        * Start image generation using stable diffusion model
        */
-      InteriorRepository.createDiffusionPredictions(interiorDoc, imageBase64, req.file.mimetype, room, style)
+      InteriorRepository.createDiffusionPredictions(interiorDoc, imgPngBase64, 'image/png', room, style)
 
       debug('mdesign:ai:stable-diffusion')(
-        `Started image generation using stable diffusion on ${imageBase64.substring(
-          0,
-          50
-        )}... with room: ${room} and style: ${style}`
+        `Started image generation using stable diffusion on ${interiorDoc.id}-${imageName}, with room: ${room} and style: ${style}`
       )
     } catch (err: any) {
       // If response is already sent, we can't send another response

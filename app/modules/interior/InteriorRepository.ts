@@ -13,7 +13,10 @@ import CustomPredictor from '../../predictors/CustomPredictor'
 import ReplicatePredictor from '../../predictors/ReplicatePredictor'
 import { InteriorType, Render } from './InteriorTypes'
 
-export const calculateImgSha = (image) => `${createHash('sha256').update(image).digest('hex')}.jpeg`
+export type ImgFormat = 'png' | 'jpeg' | 'jpg'
+
+export const calculateImgSha = (image, format: ImgFormat) =>
+  `${createHash('sha256').update(image).digest('hex')}.${format}`
 
 class InteriorRepository {
   // GCP Bucket for uploading interior images
@@ -370,10 +373,30 @@ class InteriorRepository {
     // Upload newly created renders to google storage
     // eslint-disable-next-line no-restricted-syntax
     for (const [ind, pred] of renders.entries()) {
-      const renderImageName = calculateImgSha(pred)
+      /* eslint-disable no-await-in-loop */
+      const imgSharp = sharp(Buffer.from(pred, 'base64'))
 
-      // eslint-disable-next-line no-await-in-loop
-      await this.saveImageToGCP(renderImageName, pred)
+      const imgPng = imgSharp.png({
+        quality: 100,
+        compressionLevel: 0,
+        force: true,
+      })
+      // const imgPngMeta = await imgPng.metadata()
+      const imgPngBase64 = (await imgPng.toBuffer()).toString('base64')
+
+      const imgJpeg = imgSharp.jpeg({
+        quality: 80,
+        progressive: true,
+        force: true,
+      })
+      // const imgJpegMeta = await imgJpeg.metadata()
+      const imgJpegBase64 = (await imgJpeg.toBuffer()).toString('base64')
+
+      const originalImageName = calculateImgSha(imgPngBase64, 'png')
+      const renderImageName = calculateImgSha(imgJpegBase64, 'jpeg')
+
+      await this.saveImageToGCP(`${interiorDoc.id}-${originalImageName}`, imgPngBase64)
+      await this.saveImageToGCP(`${interiorDoc.id}-${renderImageName}`, imgJpegBase64)
 
       detrResNetPredictions[ind] = {
         image: renderImageName,
@@ -382,12 +405,14 @@ class InteriorRepository {
 
       interiorDoc.progress += 2
 
-      // eslint-disable-next-line no-await-in-loop
       await interiorDoc.save()
+      /* eslint-enable no-await-in-loop */
     }
 
     // eslint-disable-next-line no-restricted-syntax
-    for await (const [ind, pred] of this.#createDETRResNetPredictions(detrResNetPredictions.map((r) => r.image))) {
+    for await (const [ind, pred] of this.#createDETRResNetPredictions(
+      detrResNetPredictions.map((r) => `${interiorDoc.id}-${r.image}`)
+    )) {
       detrResNetPredictions[ind].objects = pred.objects
 
       try {
