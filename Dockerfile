@@ -1,5 +1,5 @@
 # Use the official lightweight Node.js 14 image.
-FROM node:fermium-alpine
+FROM node:hydrogen-alpine
 
 # Create and change to the app directory.
 WORKDIR /usr/src/app
