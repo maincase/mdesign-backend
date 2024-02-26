@@ -2,8 +2,9 @@ import debug from 'debug'
 import { Request, Response } from 'express'
 import sharp from 'sharp'
 import Utils from '../../utils/Utils'
+import calculateImgSha from '../../utils/calculateImgSha'
 import { ResponseOptions } from '../../utils/responses'
-import InteriorRepository, { calculateImgSha } from './InteriorRepository'
+import InteriorRepository from './InteriorRepository'
 
 /**
  *

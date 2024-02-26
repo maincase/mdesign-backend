@@ -1,8 +1,8 @@
-import pick from 'lodash.pick'
 import { Document } from 'mongoose'
 import Replicate, { Prediction } from 'replicate'
 import config from '../../config'
 import { InteriorType } from '../modules/interior/InteriorTypes'
+import pick from '../utils/pick'
 import Predictor from './Predictor'
 
 export default class ReplicatePredictor implements Predictor {

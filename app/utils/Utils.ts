@@ -7,10 +7,6 @@ const DEFAULT_TOKEN_BODY_FIELD = 'access_token'
 const DEFAULT_TOKEN_QUERY_PARAM_NAME = 'access_token'
 
 export default class Utils {
-  static isObject(obj: any): boolean {
-    return typeof obj === 'object'
-  }
-
   static extractToken(req: any): string | null {
     let token = null
     // Extract the jwt from the request

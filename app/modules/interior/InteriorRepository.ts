@@ -2,21 +2,15 @@ import { Storage } from '@google-cloud/storage'
 import vision from '@google-cloud/vision'
 import debug from 'debug'
 import { Request } from 'express'
-import got from 'got'
-import pick from 'lodash.pick'
 import { Document, FlattenMaps } from 'mongoose'
-import { createHash } from 'node:crypto'
 import path from 'node:path'
 import sharp from 'sharp'
 import config from '../../../config'
 import CustomPredictor from '../../predictors/CustomPredictor'
 import ReplicatePredictor from '../../predictors/ReplicatePredictor'
+import calculateImgSha from '../../utils/calculateImgSha'
+import pick from '../../utils/pick'
 import { InteriorType, Render } from './InteriorTypes'
-
-export type ImgFormat = 'png' | 'jpeg' | 'jpg'
-
-export const calculateImgSha = (image, format: ImgFormat) =>
-  `${createHash('sha256').update(image).digest('hex')}.${format}`
 
 class InteriorRepository {
   // GCP Bucket for uploading interior images
@@ -277,10 +271,10 @@ class InteriorRepository {
 
       const predictions: string[] = []
       // eslint-disable-next-line no-restricted-syntax
-      for (const render of await Promise.all(
-        output.slice(1).map((renderUrl) => got(renderUrl, { responseType: 'buffer' }))
+      for (const render of await Promise.all<ArrayBuffer>(
+        output.slice(1).map(async (renderUrl: string) => (await fetch(renderUrl)).arrayBuffer())
       )) {
-        predictions.push(render.body.toString('base64'))
+        predictions.push(Buffer.from(render).toString('base64'))
       }
 
       this.#callbackQueue.push(() =>

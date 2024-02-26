@@ -1,10 +1,9 @@
 import debug from 'debug'
-import got from 'got'
-import pick from 'lodash.pick'
 import { Document } from 'mongoose'
 import config from '../../config'
 import { InteriorType } from '../modules/interior/InteriorTypes'
 import Utils from '../utils/Utils'
+import pick from '../utils/pick'
 import Predictor from './Predictor'
 
 export default class CustomPredictor implements Predictor {
@@ -59,13 +58,15 @@ export default class CustomPredictor implements Predictor {
       }
     }
 
-    const diffusionRes = await got
-      .post(predictionURL, {
-        retry: {
-          limit: 0,
+    const diffusionRes = await (
+      await fetch(predictionURL, {
+        method: 'POST',
+        headers: {
+          // Include any headers you need. If headers variable exists, spread its contents here
+          ...headers,
+          'Content-Type': 'application/json',
         },
-        ...(headers ? { headers } : {}),
-        json: {
+        body: JSON.stringify({
           instances: [
             {
               id: interiorDoc.id,
@@ -81,9 +82,9 @@ export default class CustomPredictor implements Predictor {
               ]),
             },
           ],
-        },
+        }),
       })
-      .json<{ predictions: { id: string; renders: [] }[] }>()
+    ).json()
 
     const diffusionPredictions = diffusionRes.predictions[0]
 
@@ -129,22 +130,24 @@ export default class CustomPredictor implements Predictor {
         ? `https://storage.googleapis.com/${config.googleCloud.storage.bucketName}/interiors/${pred}`
         : pred
 
-      // eslint-disable-next-line no-await-in-loop
-      const detrRes = await got
-        .post(predictionURL, {
-          retry: {
-            limit: 0,
+      /* eslint-disable no-await-in-loop */
+      const detrRes = await (
+        await fetch(predictionURL, {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
           },
-          ...(headers ? { headers } : {}),
-          json: {
+          body: JSON.stringify({
             instances: [
               {
                 image,
               },
             ],
-          },
+          }),
         })
-        .json<{ predictions: [][] }>()
+      ).json()
+      /* eslint-enable no-await-in-loop */
 
       const detrPredictions = detrRes.predictions[0]
 

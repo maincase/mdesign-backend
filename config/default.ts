@@ -77,7 +77,7 @@ export default {
           scheduler: 'K_EULER_ANCESTRAL',
           adapter_conditioning_factor: 1,
         },
-        webhook: 'https://adf4-94-43-116-18.ngrok-free.app/api/interior/create/callback',
+        webhook: 'https://5593-94-43-116-18.ngrok-free.app/api/interior/create/callback',
       },
       // detrResNet: {
       //   URL: 'maincase/mdesign-resnet50',
