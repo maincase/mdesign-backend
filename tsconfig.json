@@ -21,6 +21,7 @@
     "strictNullChecks": true,
     "alwaysStrict": true,
     "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types", "./types"]
   },
   "exclude": ["node_modules", "build"]

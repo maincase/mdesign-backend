@@ -176,7 +176,9 @@ export default class ReplicatePredictor implements Predictor {
    *
    * @param renders
    */
-  async *createDETRResNetPredictions(renders: string[]) {
+  async *createDETRResNetPredictions(
+    renders: string[]
+  ): AsyncGenerator<[count: number, item: { objects: [] }], void, unknown> {
     const predictionURL: `${string}/${string}:${string}` = config.predictionProvider.replicate.detrResNet.URL
 
     let processedCount = 0
@@ -208,7 +210,7 @@ export default class ReplicatePredictor implements Predictor {
         {
           objects: prediction.output,
         },
-      ] as [number, { objects: [] }]
+      ]
     }
   }
 }

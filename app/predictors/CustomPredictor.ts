@@ -95,7 +95,9 @@ export default class CustomPredictor implements Predictor {
    *
    * @param renders
    */
-  async *createDETRResNetPredictions(renders: string[]) {
+  async *createDETRResNetPredictions(
+    renders: string[]
+  ): AsyncGenerator<[count: number, item: { objects: [] }], void, unknown> {
     const predictionURL = config.predictionProvider.mdesign.detrResNet.URL as string
 
     let headers
@@ -139,24 +141,22 @@ export default class CustomPredictor implements Predictor {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            instances: [
-              {
-                image,
-              },
-            ],
+            input: {
+              image,
+            },
           }),
         })
       ).json()
       /* eslint-enable no-await-in-loop */
 
-      const detrPredictions = detrRes.predictions[0]
+      const detrPredictions = detrRes.output
 
       yield [
         processedCount - 1,
         {
           objects: detrPredictions,
         },
-      ] as [number, { objects: [] }]
+      ]
     }
   }
 }
