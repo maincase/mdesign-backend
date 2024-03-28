@@ -9,7 +9,7 @@ const InteriorSchema = new Schema<InteriorType>(
     progress: { type: Number, required: true, default: 0 },
     renders: [{ type: Schema.Types.ObjectId, ref: 'Render' }],
     provider: { type: String, required: true },
-    providerId: { type: String, unique: true },
+    providerId: { type: String, unique: true, sparse: true },
   },
   {
     collection: 'interiors',

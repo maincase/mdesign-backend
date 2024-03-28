@@ -39,7 +39,7 @@ class InteriorRepository {
    * @returns
    */
   static #filterInteriorResults(interiorResults: InteriorType[]) {
-    return (interiorResults ?? []).map((interior) => ({
+    return interiorResults.map((interior) => ({
       ...interior,
       renders: interior.renders.map((render) => ({
         ...render,
@@ -218,7 +218,7 @@ class InteriorRepository {
    * @param style
    * @returns
    */
-  static createDiffusionPredictions(
+  static async createDiffusionPredictions(
     interiorDoc: Awaited<ReturnType<typeof InteriorRepository.createRecord>>,
     image: string,
     imageMimeType: string,
@@ -231,11 +231,17 @@ class InteriorRepository {
     // Setup the predictor
     const predictor = this.#setupPredictor('stableDiffusion')
 
-    predictor.createDiffusionPredictions(
-      predictor instanceof ReplicatePredictor
-        ? { interiorDoc, image, imageMimeType, room, style }
-        : { interiorDoc, image, room, style }
-    )
+    if (predictor instanceof ReplicatePredictor) {
+      predictor.createDiffusionPredictions({ interiorDoc, image, imageMimeType, room, style })
+    } else {
+      const renders = await predictor.createDiffusionPredictions({ interiorDoc, image, room, style })
+
+      // As custom provider not uses callback system, we need to process predictions here
+      this.#processDiffusionPredictions({
+        id: interiorDoc.id as string,
+        renders,
+      })
+    }
   }
 
   /**
@@ -433,7 +439,7 @@ class InteriorRepository {
     // Create interior object which will be sent to repository
     const interior: InteriorType = {
       ...pick(interiorDoc, ['room', 'style', 'image', 'provider', 'providerId']),
-      renders: detrResNetPredictions as Render[],
+      renders: detrResNetPredictions,
     }
 
     // Saving final record to database is additional 1.5% progress

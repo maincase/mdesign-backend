@@ -81,7 +81,7 @@ class InteriorController {
 
       const { room, style, captchaToken } = req.body
 
-      if (!captchaToken) {
+      if (!captchaToken && process.env.NODE_ENV !== 'development') {
         throw new Error('Please provide captcha token')
       }
 
@@ -95,7 +95,7 @@ class InteriorController {
         throw new Error('No user remote IP address found')
       }
 
-      if (!Utils.captchaVerify(captchaToken, userIp)) {
+      if (!Utils.captchaVerify(captchaToken, userIp) && process.env.NODE_ENV !== 'development') {
         throw new Error('Captcha verification failed')
       }
 
