@@ -1,4 +1,20 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/modern-design-ai/mdesign-backend:latest', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/modern-design-ai/mdesign-backend:latest']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'run',
+        'deploy',
+        'mdesign-backend',
+        '--image',
+        'gcr.io/modern-design-ai/mdesign-backend:latest',
+        '--region',
+        'us-central1',
+        '--platform',
+        'managed',
+      ]
 images: ['gcr.io/modern-design-ai/mdesign-backend:latest']
