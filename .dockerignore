@@ -1,0 +1,11 @@
+node_modules
+.idea
+.vscode
+.DS_Store
+build
+coverage
+Dockerfile
+.dockerignore
+npm-debug.log
+README.md
+.git
