@@ -4,9 +4,9 @@ FROM node:hydrogen-alpine as base
 FROM base as deps
 WORKDIR /app
 
-COPY package*.json .npmrc ./
+COPY package.json .npmrc ./
 
-RUN npm ci
+RUN npm i
 
 # Builder
 FROM base as builder
@@ -24,7 +24,7 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 --ingroup nodejs nodejs
 
-COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/build ./build
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
