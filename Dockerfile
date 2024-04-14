@@ -26,7 +26,7 @@ RUN adduser --system --uid 1001 --ingroup nodejs nodejs
 
 COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/build ./build
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json .
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
 USER nodejs
 
