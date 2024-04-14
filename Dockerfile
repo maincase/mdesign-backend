@@ -1,26 +1,38 @@
-# Use the official lightweight Node.js 14 image.
-FROM node:hydrogen-alpine
+FROM node:hydrogen-alpine as base
 
-# Create and change to the app directory.
-WORKDIR /usr/src/app
+# Dependencies
+FROM base as deps
+WORKDIR /app
 
-# Copy application dependency manifests to the container image.
-# A wildcard is used to ensure both package.json AND package-lock.json are copied.
-# Copying this separately prevents re-running npm install on every code change.
 COPY package*.json .npmrc ./
 
-# Install production dependencies.
 RUN npm ci
 
-# Copy local code to the container image.
-COPY . ./
+# Builder
+FROM base as builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
 RUN npm run build
 
+# Runner
+FROM base as runner
+WORKDIR /app
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 --ingroup nodejs nodejs
+
+COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/build ./build
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json .
+
+USER nodejs
+
 ENV PORT 8080
 
-# Run the web service on container startup.
-
-CMD ["npm", "run", "start:production"]
-
 EXPOSE 8080
+
+# Run the web service on container startup.
+CMD ["npm", "run", "start:production"]
